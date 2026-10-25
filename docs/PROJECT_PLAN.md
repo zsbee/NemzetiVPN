@@ -6,7 +6,9 @@ Build an installable LG webOS app for an LG OLED C5 that signs an eligible viewe
 
 The MVP starts with M4 Sport. Add M1, M2, M5, Duna, Duna World, and available event feeds incrementally as their access and playback are verified. Include account status, sign-out, session expiry, network recovery, and helpful playback errors. Use Hungarian UI first, with strings separated for later English translation.
 
-On-demand catalogues, recordings, downloads, multi-account switching, casting, older-TV support, and app-store release are outside the MVP. Watching should ultimately happen inside our installed app with a TV-focused UI; merely launching the provider page is a feasibility probe, not the finished experience.
+On-demand catalogues, recordings, downloads, multi-account switching, casting, phone/QR pairing, older-TV support, and app-store release are outside the MVP. Watching should ultimately happen inside our installed app with a TV-focused UI; merely launching the provider page is a feasibility probe, not the finished experience.
+
+Login uses Email and Password fields with the built-in webOS virtual keyboard, a Show password control, and an explicit Sign in button. Reserve space for the keyboard and support both directional navigation and the Magic Remote pointer. No external login server is planned. See [authentication UX](AUTHENTICATION.md) for focus behavior, errors, and session retention.
 
 ## Architecture to evaluate
 
@@ -44,7 +46,7 @@ Evaluate the least complex viable route first. Do not assume arbitrary native-pl
 2. Inspect signed-out login in an isolated session, preserving the owner's existing browser login. Capture only redacted protocol structure, including challenges and logout.
 3. Inspect one successful live playback request chain: resolver, manifest, segments, tokens, and any encryption/license traffic. Determine required credentials and origins.
 4. Build the smallest disposable TV probe to authenticate and play M4 through the normal authorized access path. Try native HLS first if the stream is HLS; add another supported playback path only when evidence requires it.
-5. Test signed-out failure, wrong credentials, expiry, logout, and relaunch. Record limits separately from desktop observations.
+5. Test system-keyboard entry, password masking/reveal, keyboard dismissal with Back, focus after errors, signed-out failure, wrong credentials, expiry, logout, and relaunch. Record limits separately from desktop observations.
 6. Write a short architecture decision with the selected route, alternatives rejected, minimum platform version, and session persistence policy.
 
 **Exit criterion:** independent login on the C5, at least 30 minutes of stable live playback with audio, and clean sign-out. Repeat using another eligible account sequentially when one is available; account-independent code and synthetic tests do not replace that final verification. No full UI build before the first real login-to-playback success.

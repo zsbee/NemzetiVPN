@@ -8,12 +8,12 @@ Initial hardware target: **LG OLED C5**. Start with webOS 25 compatibility and c
 
 ## Intended experience
 
-1. Open the app on the television and sign in with your own NVT account.
+1. Open the app and enter your own NVT email and password using the TV's built-in virtual keyboard.
 2. Choose an available live channel using the remote.
 3. Watch fullscreen with the TV's video player.
 4. Return to the channel list or sign out and remove the local session.
 
-Start with M4 Sport. Add other available channels after authentication and playback work reliably on the C5. On-demand browsing and phone-assisted login are later possibilities.
+Start with M4 Sport. Add other available channels after authentication and playback work reliably on the C5. On-demand browsing is a later possibility. QR/phone pairing is outside the MVP; login is designed to work on the TV without an additional server.
 
 ## Project documents
 

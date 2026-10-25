@@ -6,9 +6,15 @@ This is a proposed design, pending inspection of NVT's signed-out flow. No authe
 
 Each installation authenticates its own eligible viewer. There is no project-wide account, shared session, or maintainer-hosted credential service.
 
-For the first version, support login on the television through the normal provider flow if it works within webOS. If a native form is technically compatible, request only the fields actually required by NVT. Support remote navigation, the TV keyboard, masked password input, cancellation, and clear errors. Hand interactive challenges to the viewer. Account creation and password reset stay on the official site.
+The agreed first-version experience is email-and-password entry on the television using the built-in webOS virtual keyboard. NVT does not support QR login, as confirmed by the owner. No phone pairing or additional hosting is required for the login UX. The underlying NVT authentication requests and media-session handoff still need to be proved.
 
-Phone or laptop assistance is optional future work. A QR code alone cannot transfer an authenticated session. Add it only after proving a provider-supported return flow or designing an explicit, secure pairing mechanism with a clear trust model. Never ask users to paste browser cookies into the app.
+Show a single sign-in screen with Email, Password, Show password, and Sign in. Use normal HTML input controls so selecting a field opens the system keyboard. Keep the form above the keyboard area, reserving the bottom third of the screen. Use an email-appropriate input configuration, disable autocapitalization and spellcheck, and test its keyboard layout on the C5. Mask the password by default; the viewer can explicitly reveal it, and leaving the screen masks it again. See [LG's virtual keyboard guide](https://webostv.developer.lge.com/develop/guides/virtual-keyboard).
+
+Directional keys and OK must reach every control; the Magic Remote pointer should work too. Keyboard completion advances from Email to Password, then to the explicit Sign in button where supported. Back dismisses the keyboard before leaving the sign-in screen; verify the system event behavior on the TV. Avoid opening the keyboard on every screen visit by initially focusing a non-editable control.
+
+Submit once, show a signing-in state, and prevent duplicate requests. On invalid credentials, retain the email for correction, clear the password, and focus Password without automatically reopening the keyboard. On a network error, offer an explicit retry without submitting repeatedly. Hand any provider challenges to the viewer. Account creation and password reset stay on the official site.
+
+Offer an unchecked Remember email option for convenience; it stores only the email locally and is independent of session retention. Sign-out removes the session and saved email. Try to retain a valid session across launches only when protected persistence is verified, subject to NVT expiry. Otherwise explain that sign-in will be required again. Never ask users to paste browser cookies into the app.
 
 ## Session ownership
 
