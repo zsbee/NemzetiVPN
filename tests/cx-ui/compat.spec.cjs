@@ -1,4 +1,6 @@
 const { test, expect } = require('@playwright/test');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -14,6 +16,30 @@ test.beforeEach(async ({ page }) => {
       : method === 'logout' ? { remoteConfirmed: true } : {};
     return route.fulfill({ json: { returnValue: true, data } });
   });
+});
+
+test('packaged CX app loads scripts, styles and images from a file address', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    window.cspViolations = [];
+    document.addEventListener('securitypolicyviolation', event => {
+      window.cspViolations.push(`${event.effectiveDirective}: ${event.blockedURI}`);
+    });
+    window.PalmServiceBridge = class {
+      call(uri) {
+        if (uri.endsWith('/lease')) return;
+        this.onservicecallback(JSON.stringify({ returnValue: true, data: { authenticated: false } }));
+      }
+      cancel() {}
+    };
+  });
+  await page.goto(pathToFileURL(path.resolve('dist/cx/tv/index.html')).href);
+  await expect(page.getByRole('button', { name: 'Bejelentkezés', exact: true })).toBeFocused();
+  expect(await page.locator('link[rel="stylesheet"]').evaluate(link => Boolean(link.sheet))).toBe(true);
+  expect(await page.locator('#login-screen .brand-mark').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+  expect(await page.evaluate(() => window.cspViolations)).toEqual([]);
+  expect(errors).toEqual([]);
 });
 
 test('legacy browser saves login, restores it, plays, returns and signs out', async ({ page }) => {

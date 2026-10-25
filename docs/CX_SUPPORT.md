@@ -39,6 +39,9 @@ loads the following adapters:
   preview request timeouts, and the playback overlay's inert controls.
 - CSS fallbacks for focus outlines, font sizing, background positioning/gradient,
   and flex spacing. The C5 stylesheet is copied and extended only in `dist/cx`.
+- Explicit `file:` permission for scripts, stylesheets and images in the CX
+  content security policy, so webOS 5 can load packaged assets from a file address.
+  Network access and the other security directives retain the shared restrictions.
 - Service URL globals, cancellation, and the string methods used by the provider.
 - Build-time mapping of `node:` imports to Node 8 module names. Small HTTP/HTTPS
   adapters preserve response chaining and request cancellation on the older API.
@@ -60,7 +63,7 @@ npm run test:ui:cx
 ```
 
 `test:ui:cx` runs the existing browser regression suite against the CX bundle,
-plus tests with newer browser APIs removed. These are modern Chrome tests with
+plus a packaged `file:` page load and tests with newer browser APIs removed. These are modern Chrome tests with
 missing APIs, not a full Chromium 68 or webOS emulator.
 
 To execute the backend checks on an actual Node 8.12 binary, set its path:

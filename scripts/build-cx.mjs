@@ -1,11 +1,18 @@
 import './build.mjs';
 import { build } from 'esbuild';
-import { cp, readFile, appendFile, mkdir } from 'node:fs/promises';
+import { cp, readFile, writeFile, appendFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 // Separate output and entry points: the standard webOS 25 build is untouched.
 await mkdir('dist/cx', { recursive: true });
 for (const directory of ['tv', 'service', 'dev']) await cp(`dist/${directory}`, `dist/cx/${directory}`, { recursive: true });
+// webOS 5 loads packaged pages from file:, which 'self' does not reliably cover.
+// Permit local files only for packaged assets; retain the shared network policy.
+const html = await readFile('dist/cx/tv/index.html', 'utf8');
+await writeFile('dist/cx/tv/index.html', html.replace(
+  /\b(script-src|style-src|img-src) 'self'/g,
+  "$1 'self' file:",
+));
 const legacyBrowser = {
   name: 'cx-vault',
   setup(plugin) {
