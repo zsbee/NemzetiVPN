@@ -1,0 +1,36 @@
+# Dependencies and generated packages
+node_modules/
+dist/
+build/
+coverage/
+*.ipk
+*.log
+
+# Local configuration and authentication material
+.env
+.env.*
+!.env.example
+*.local
+.local/
+.secrets/
+secrets/
+sessions/
+cookies/
+*.har
+*.pem
+*.key
+*.p12
+*.pfx
+*cookies*.json
+*cookies*.txt
+*session*.json
+*storage-state*.json
+
+# Local inspection artifacts may contain personal data or signed URLs
+research-private/
+artifacts-private/
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
