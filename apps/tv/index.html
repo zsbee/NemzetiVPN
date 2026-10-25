@@ -47,8 +47,8 @@
       <div class="account"><div><p id="account-email"></p><p id="account-saved" class="muted"></p></div><button id="forget" class="text-button" data-text="forget"></button></div>
     </section>
     <section id="player-screen" hidden aria-label="Lejátszó">
-      <video id="video" controls playsinline></video>
-      <div class="player-overlay"><div><span class="live-dot">ÉLŐ</span><h2 id="player-title"></h2></div><button id="back-player" class="secondary" data-text="back"></button></div>
+      <video id="video" controls playsinline tabindex="0"></video>
+      <div id="player-overlay" class="player-overlay"><div><span class="live-dot">ÉLŐ</span><h2 id="player-title"></h2></div><button id="back-player" class="secondary" data-text="back"></button></div>
       <div class="player-state"><p id="player-status" role="status" aria-live="polite"></p><button id="retry-playback" class="primary" hidden data-text="retry"></button></div>
     </section>
   </main>

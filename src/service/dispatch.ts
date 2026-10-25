@@ -14,6 +14,7 @@ export async function dispatch(provider: Backend, method: string, payload: unkno
       }
       case 'logout': data = await provider.logout(); break;
       case 'stop': await provider.stop?.(); data = {}; break;
+      case 'diagnostics': data = await provider.diagnostics?.() ?? {}; break;
       default: throw new AppError('INVALID_REQUEST');
     }
     return { returnValue: true, data };

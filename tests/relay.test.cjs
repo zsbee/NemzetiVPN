@@ -26,19 +26,26 @@ test('relay binds loopback, enforces capability/origin and serves only registere
   }, 'http://127.0.0.1:4390');
   try {
     const url = await relay.start(base);
+    assert.ok(new URL(url).pathname.endsWith('.m3u8'));
     assert.equal(new URL(url).hostname, '127.0.0.1');
     const noCapability = await fetch(url.replace(/\/[a-f0-9]{48}\//, '/incorrect/'));
     assert.equal(noCapability.status, 403);
     const foreign = await fetch(url, { headers: { Origin: 'https://attacker.example' } });
     assert.equal(foreign.status, 403);
     assert.equal(fetched.length, 0);
+    const head = await fetch(url, { method: 'HEAD' });
+    assert.equal(head.status, 200);
+    assert.equal(head.headers.get('content-type'), 'application/vnd.apple.mpegurl');
+    assert.ok(Number(head.headers.get('content-length')) > 0);
+    assert.equal((await head.text()).length, 0);
     const master = await fetch(url, { headers: { Origin: 'http://127.0.0.1:4390' } });
     assert.equal(master.headers.get('access-control-allow-origin'), 'http://127.0.0.1:4390');
     const segment = (await master.text()).trim().split('\n').at(-1);
     const bytes = await fetch(segment, { headers: { Range: 'bytes=0-8' } });
     assert.equal(bytes.status, 206);
     assert.equal(await bytes.text(), 'synthetic');
-    assert.equal(fetched[1], base.replace('master.m3u8', 'segment.ts'));
+    assert.ok(new URL(segment).pathname.endsWith('.ts'));
+    assert.equal(fetched.at(-1), base.replace('master.m3u8', 'segment.ts'));
     const unknown = await fetch(url.replace(/[^/]+$/, 'not-registered'));
     assert.equal(unknown.status, 404);
   } finally { relay.stop(); }

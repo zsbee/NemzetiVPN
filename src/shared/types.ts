@@ -1,8 +1,8 @@
 export type ErrorCode = 'AUTH_REQUIRED' | 'INVALID_CREDENTIALS' | 'CHALLENGE_REQUIRED' |
-  'NETWORK' | 'PROVIDER_CHANGED' | 'CAPACITY' | 'UNSUPPORTED_MEDIA' | 'STORAGE' | 'CANCELLED' | 'INVALID_REQUEST';
+  'NETWORK' | 'PROVIDER_CHANGED' | 'CAPACITY' | 'UNSUPPORTED_MEDIA' | 'PLAYBACK' | 'STORAGE' | 'CANCELLED' | 'INVALID_REQUEST';
 
 export class AppError extends Error {
-  constructor(public readonly code: ErrorCode) { super(code); }
+  constructor(public readonly code: ErrorCode, public readonly diagnosticHost?: string) { super(code); }
 }
 
 export interface Credentials { email: string; password: string }
@@ -15,6 +15,7 @@ export interface Backend {
   channels(): Promise<Channel[]>;
   resolve(id: string): Promise<Playback>;
   stop?(): Promise<void>;
+  diagnostics?(): Promise<object>;
   logout(): Promise<{ remoteConfirmed: boolean }>;
 }
 

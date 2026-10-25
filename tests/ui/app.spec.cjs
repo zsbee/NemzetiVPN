@@ -130,3 +130,55 @@ test('the player starts synthetic HLS media and stops it when returning to chann
   await expect(page.getByRole('button', { name: 'Nézem' })).toBeFocused();
   await expect(page.locator('video')).not.toHaveAttribute('src');
 });
+test('native source explicitly selects HLS and cancellation clears it', async ({ page }) => {
+  const source = await fs.readFile('dist/test/player.js', 'utf8');
+  await page.route('**/player-test.js', route => route.fulfill({ contentType: 'application/javascript', body: source }));
+  await page.goto('/');
+  const result = await page.evaluate(async () => {
+    const { TvPlayer } = await import('/player-test.js');
+    const v = document.createElement('video');
+    v.canPlayType = () => 'maybe'; v.load = () => {}; v.play = () => new Promise(() => {});
+    const player = new TvPlayer(v, () => {}, 10000);
+    const pending = player.start('http://127.0.0.1:4390/native-test.m3u8', 'application/vnd.apple.mpegurl').catch(error => error.code);
+    const source = v.querySelector('source');
+    const transport = JSON.parse(decodeURI(source.type.split('mediaOption=')[1])).mediaTransportType;
+    player.stop();
+    return { transport, result: await pending, sourceRemoved: !v.querySelector('source') };
+  });
+  expect(result).toEqual({ transport: 'HLS', result: 'CANCELLED', sourceRemoved: true });
+});
+test('a native player that never starts falls back and exits loading within a bounded time', async ({ page }) => {
+  const source = await fs.readFile('dist/test/player.js', 'utf8');
+  await page.route('**/player-test.js', route => route.fulfill({ contentType: 'application/javascript', body: source }));
+  await page.route('**/never-starts.m3u8', route => route.abort());
+  await page.goto('/');
+  const result = await page.evaluate(async () => {
+    const { TvPlayer } = await import('/player-test.js');
+    const v = document.createElement('video');
+    v.canPlayType = () => 'maybe'; v.load = () => {}; v.play = () => new Promise(() => {});
+    const player = new TvPlayer(v, () => {}, 30);
+    let code;
+    const start = performance.now();
+    try { await player.start('http://127.0.0.1:4390/never-starts.m3u8', 'application/vnd.apple.mpegurl'); } catch (e) { code = e.code; }
+    const fallback = player.mode === 'mse'; player.stop();
+    return { code, fallback, bounded: performance.now() - start < 2000 };
+  });
+  expect(result).toEqual({ code: 'PLAYBACK', fallback: true, bounded: true });
+});
+test('playback overlay hides when idle and returns with cursor movement or remote OK', async ({ page }) => {
+  await mockProvider(page);
+  await page.goto('/'); await login(page);
+  await page.getByRole('button', { name: 'Nézem' }).click();
+  const overlay = page.locator('#player-overlay');
+  await expect(overlay).toHaveClass(/chrome-hidden/, { timeout: 5000 });
+  await expect(overlay).toHaveAttribute('inert', '');
+  await page.mouse.move(200, 100);
+  await expect(overlay).not.toHaveClass(/chrome-hidden/);
+  await expect(overlay).toHaveClass(/chrome-hidden/, { timeout: 5000 });
+  await page.keyboard.press('Enter');
+  await expect(overlay).not.toHaveClass(/chrome-hidden/);
+  await expect(page.getByRole('button', { name: 'Vissza a csatornákhoz', exact: true })).toBeFocused();
+  await expect(overlay).toHaveClass(/chrome-hidden/, { timeout: 5000 });
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Nézem' })).toBeFocused();
+});

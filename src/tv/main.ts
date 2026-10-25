@@ -4,7 +4,8 @@ import { AppBackend, onTV } from './backend';
 import { DeviceVault } from './vault';
 import { installFocusNavigation } from './focus';
 import { hu, errors } from './strings';
-import Hls from 'hls.js';
+import { TvPlayer } from './player';
+import { PlaybackControls } from './controls';
 
 const backend = new AppBackend();
 const account = new Account(backend, new DeviceVault());
@@ -13,7 +14,6 @@ let screen: 'login' | 'channels' | 'player' = 'login';
 let keyboard = false;
 let busy = false;
 let viewEpoch = 0;
-let hls: Hls | null = null;
 let mediaRecoveryAttempted = false;
 let selectedChannel: Channel = M4;
 let channels: Channel[] = CHANNELS;
@@ -25,6 +25,8 @@ const email = $<HTMLInputElement>('email');
 const password = $<HTMLInputElement>('password');
 const remember = $<HTMLInputElement>('remember');
 const video = $<HTMLVideoElement>('video');
+const player = new TvPlayer(video, () => { void playbackFailed(); });
+const controls = new PlaybackControls($('player-overlay'), video, () => screen === 'player');
 
 function announce(message = '', error = false): void {
   const target = screen === 'login' ? $('login-message') : $('app-message');
@@ -85,8 +87,7 @@ async function loadChannels(): Promise<void> {
   } catch { channels = CHANNELS; }
 }
 function stopPlayback(stopService = false): void {
-  hls?.destroy(); hls = null;
-  video.pause(); video.removeAttribute('src'); video.load();
+  player.stop();
   if (stopService) void backend.stop().catch(() => {});
 }
 function errorText(error: unknown): string { return errors[publicError(error)] ?? errors.NETWORK; }
@@ -128,24 +129,18 @@ async function play(resetRecovery = true): Promise<void> {
   const epoch = ++viewEpoch;
   stopPlayback();
   show('player'); $('player-title').textContent = selectedChannel.name;
+  controls.show();
   $('player-status').textContent = hu.loading;
   $('retry-playback').hidden = true;
   $('back-player').focus();
   try {
     const playback = await account.resolve(selectedChannel.id);
     if (epoch !== viewEpoch) return;
-    if (video.canPlayType(playback.mime)) {
-      video.src = playback.url;
-      await video.play();
-    } else if (Hls.isSupported()) {
-      hls = new Hls({ enableWorker: false, maxBufferLength: 20, maxMaxBufferLength: 40 });
-      hls.on(Hls.Events.MANIFEST_PARSED, () => { void video.play().catch(() => playbackFailed()); });
-      hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) void playbackFailed(); });
-      hls.loadSource(playback.url); hls.attachMedia(video);
-    } else { $('player-status').textContent = hu.playFailed; }
+    await player.start(playback.url, playback.mime);
   } catch (error) {
     if (epoch !== viewEpoch) return;
     const code = publicError(error);
+    if (code === 'PLAYBACK') { await playbackFailed(); return; }
     if (['AUTH_REQUIRED', 'INVALID_CREDENTIALS', 'CHALLENGE_REQUIRED'].includes(code)) {
       stopPlayback(); show('login'); email.value = account.email;
       announce(errorText(error), true); $('sign-in').focus();
@@ -159,7 +154,7 @@ $('retry-playback').addEventListener('click', () => { void play(); });
 $('back-player').addEventListener('click', () => { ++viewEpoch; stopPlayback(true); showChannels(); });
 video.addEventListener('playing', () => { $('player-status').textContent = ''; });
 async function playbackFailed(): Promise<void> {
-  if (screen !== 'player' || !video.getAttribute('src')) return;
+  if (screen !== 'player' || player.mode === 'stopped') return;
   const epoch = viewEpoch;
   if (!mediaRecoveryAttempted) {
     mediaRecoveryAttempted = true;
@@ -171,7 +166,6 @@ async function playbackFailed(): Promise<void> {
   $('player-status').textContent = hu.playFailed;
   $('retry-playback').hidden = false;
 }
-video.addEventListener('error', () => { void playbackFailed(); });
 
 $('forget').addEventListener('click', async () => {
   try { await account.forget(); updateAccount(); announce('A mentett belépési adatokat töröltük.'); }

@@ -4,7 +4,7 @@ import { CookieJar } from 'tough-cookie';
 import { AppError } from '../shared/types';
 
 export const GATEWAY = 'https://nvpn.nvt.gov.hu';
-const UPSTREAM_HOSTS = new Set(['m4sport.hu', 'player.mediaklikk.hu', 'mediaklikk.hu', 'cdn.connectmedia.hu']);
+const UPSTREAM_HOSTS = new Set(['m4sport.hu', 'hirado.hu', 'player.mediaklikk.hu', 'mediaklikk.hu', 'cdn.connectmedia.hu']);
 export const allowedUpstream = (host: string) => UPSTREAM_HOSTS.has(host) || /^c\d+-node\d+-cdn\.connectmedia\.hu$/.test(host);
 export const USER_AGENT = 'Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.270 Safari/537.36 WebAppManager';
 export interface Response { url: string; status: number; headers: Record<string, string | string[] | undefined>; body: Buffer }
@@ -17,7 +17,7 @@ export function gatewayUrl(input: string, base = GATEWAY + '/'): string {
   if (url.origin !== GATEWAY || url.username || url.password || url.hash) throw new AppError('PROVIDER_CHANGED');
   if (url.pathname.startsWith('/prx/')) {
     const match = /^\/prx\/000\/(https?)\/([^/]+)(?:\/|$)/.exec(url.pathname);
-    if (!match || !(match[2] === 'localhost' || allowedUpstream(match[2]))) throw new AppError('PROVIDER_CHANGED');
+    if (!match || !(match[2] === 'localhost' || allowedUpstream(match[2]))) throw new AppError('PROVIDER_CHANGED', match?.[2]?.replace(/[^a-z0-9.-]/gi, '').slice(0, 253));
   } else if (url.pathname !== '/') throw new AppError('PROVIDER_CHANGED');
   return url.href;
 }
@@ -26,7 +26,7 @@ export function proxied(input: string): string {
   const url = new URL(input);
   if (url.origin === GATEWAY) return gatewayUrl(input);
   if (url.protocol !== 'https:' || !allowedUpstream(url.hostname) || url.port || url.username || url.password)
-    throw new AppError('PROVIDER_CHANGED');
+    throw new AppError('PROVIDER_CHANGED', url.hostname);
   return gatewayUrl(`${GATEWAY}/prx/000/https/${url.hostname}${url.pathname}${url.search}`);
 }
 

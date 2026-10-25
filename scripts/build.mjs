@@ -13,6 +13,7 @@ const results = await Promise.all([
   build({ entryPoints: ['src/tools/probe.ts'], outfile: 'dist/tools/probe.cjs', bundle: true, platform: 'node', target: 'node22', format: 'cjs' }),
   build({ entryPoints: { provider: 'src/provider/nvt.ts', relay: 'src/provider/relay.ts', transport: 'src/provider/transport.ts', account: 'src/tv/account.ts', dispatch: 'src/service/dispatch.ts', types: 'src/shared/types.ts' }, outdir: 'dist/test', bundle: true, platform: 'node', target: 'node22', format: 'cjs', outExtension: { '.js': '.cjs' } }),
   build({ entryPoints: ['src/tv/vault.ts'], outfile: 'dist/test/vault.js', bundle: true, target: 'chrome120', format: 'esm' }),
+  build({ entryPoints: ['src/tv/player.ts'], outfile: 'dist/test/player.js', bundle: true, target: 'chrome120', format: 'esm' }),
 ]);
 
 for (const [index, output] of [[0, 'dist/tv'], [1, 'dist/service']]) {

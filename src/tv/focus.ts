@@ -11,7 +11,7 @@ export function installFocusNavigation(keyboardVisible: () => boolean, back: () 
     const direction = keys[event.key];
     if (!direction) return;
     const controls = [...document.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]')]
-      .filter(node => node.getClientRects().length && !node.closest('[hidden]'));
+      .filter(node => node.getClientRects().length && !node.closest('[hidden], [inert]'));
     if (!current || !controls.includes(current)) { controls[0]?.focus(); return; }
     const origin = current.getBoundingClientRect();
     const ox = origin.x + origin.width / 2, oy = origin.y + origin.height / 2;

@@ -108,3 +108,18 @@ test('all seven TV channels remain available and only active known event feeds a
   assert.equal(channels.find(c => c.id === 'm1').description, 'Synthetic programme');
   assert.equal(channels.at(-1).id, 'm4sport2');
 });
+test('M1 follows its approved Hirado redirect and uses the final page as player origin', async () => {
+  const finalPage = 'https://nvpn.nvt.gov.hu/prx/000/https/hirado.hu/elo/mtv1live';
+  assert.equal(gatewayUrl(finalPage), finalPage);
+  const transport = fakeTransport([...loginResponses(),
+    response(finalPage, `<script>loadPlayer('example', {"streamId":"mtv1live"});</script>`),
+    (url, options) => {
+      assert.equal(new URL(url).searchParams.get('sourceUrl'), 'https://hirado.hu/elo/mtv1live');
+      assert.equal(options.referer, finalPage);
+      return response(url, `"file":"/prx/000/https/c401-node61-cdn.connectmedia.hu/synthetic/m1.m3u8"`);
+    },
+  ]);
+  const provider = new NvtProvider(transport);
+  await provider.login(credentials);
+  assert.ok((await provider.resolve('m1')).url.endsWith('/synthetic/m1.m3u8'));
+});

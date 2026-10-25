@@ -53,7 +53,8 @@ header { display:flex; align-items:center; justify-content:space-between; }
 .account p { font-size:.65rem; margin:.2rem 0; }
 .playing { background:#000; }
 #video { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; }
-.player-overlay { position:fixed; top:0; left:0; right:0; padding:3vh 4vw; display:flex; justify-content:space-between; background:linear-gradient(#000b,transparent); }
+.player-overlay { position:fixed; top:0; left:0; right:0; padding:3vh 4vw; display:flex; justify-content:space-between; background:linear-gradient(#000b,transparent); transition:opacity .2s ease; }
+.player-overlay.chrome-hidden { opacity:0; pointer-events:none; }
 .player-overlay h2 { margin-top:.3rem; }
 .player-state { position:fixed; top:35vh; left:20vw; right:20vw; text-align:center; pointer-events:none; }
 .player-state p { font-size:1rem; line-height:1.6; }

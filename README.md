@@ -2,7 +2,7 @@
 
 A planned, independent LG TV app for watching live media available through Nemzeti Virtuális Tér (NVT), using each viewer's own eligible NVT account.
 
-**Status:** an installable feasibility build and a working local browser preview. The owner has successfully signed into the preview with NVT. Authenticated M4 playlists, a video segment, and an HLS key have been fetched through the app's relay. Testing on the physical C5 is still required; this is not a validated TV release.
+**Status:** a working development build on the owner's C5 and in the local browser preview. NVT sign-in and M4 native playback at 1920×1080 have been verified on the TV, and the owner confirmed playback works. Saved login has also survived app updates. Longer stability tests, cold-TV restarts, and coverage of every channel remain open.
 
 Initial hardware target: **LG OLED C5**. Start with webOS 25 compatibility and confirm the TV's installed version before implementation. Older televisions are outside the first release target.
 
@@ -35,7 +35,7 @@ The preview and installed app use the same authentication and playback code. The
 npm run package:tv
 ```
 
-The package is written to `dist/packages/hu.nemzetivpn.tv_0.1.0_all.ipk`. Follow the [TV setup guide](docs/TV_SETUP.md) to enable Developer Mode, connect the TV, and install it. No TV address or private device key is committed.
+The package is written to `dist/packages/hu.nemzetivpn.tv_0.1.3_all.ipk`. Follow the [TV setup guide](docs/TV_SETUP.md) to enable Developer Mode, connect the TV, and install it. No TV address or private device key is committed.
 
 ## Checks
 
@@ -58,7 +58,7 @@ Browser tests require Google Chrome and use isolated test profiles with syntheti
 
 ## Development and publication
 
-The implementation uses TypeScript, a small DOM-based interface, and a bundled webOS JS service compiled for Node.js 16. Do not treat desktop playback as proof of TV compatibility. Credential storage uses AES-GCM and a non-exportable Web Crypto key in IndexedDB; it is not claimed to be a hardware-backed keystore, and C5 persistence must be tested.
+The implementation uses TypeScript, a small DOM-based interface, and a bundled webOS JS service compiled for Node.js 16. Credential storage uses AES-GCM and a non-exportable Web Crypto key in IndexedDB; it is not claimed to be a hardware-backed keystore. Persistence across app updates is verified on the C5; a full TV restart still needs testing.
 
 Local Git uses the `main` branch. No remote or public repository has been configured. Open-source publication is planned; choose a license before public release. The project is not affiliated with NVT, MTVA, or LG. The app will require an existing eligible account; registration remains with NVT.
 

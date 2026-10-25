@@ -2,7 +2,7 @@
 
 This first hardware test checks the system keyboard, credential persistence, app-service permissions, and native playback.
 
-First installation completed on 2026-10-25. LG's tools confirmed model `OLED65C59LB.DVSQLJP`, SDK `10.3.1`, firmware `33.31.68`, and successful installation and launch of `hu.nemzetivpn.tv`. The running-app listing includes the app. Keyboard, NVT sign-in, credential persistence, and playback still require verification on the television.
+First installation completed on 2026-10-25. LG's tools confirmed model `OLED65C59LB.DVSQLJP`, SDK `10.3.1`, and firmware `33.31.68`. After correcting native HLS initialization, the TV played M4 at 1920×1080 with an advancing playback clock, and the owner confirmed playback works. Saved login survived app updates. Full restart and stability checks below remain open.
 
 ## Prepare the television
 
@@ -29,7 +29,7 @@ Add a device named `c5` with the TV's actual IP address, port `9922`, and user `
 npx ares-novacom --device c5 --getkey
 npx ares-device --system-info --device c5
 npm run package:tv
-npx ares-install --device c5 dist/packages/hu.nemzetivpn.tv_0.1.0_all.ipk
+npx ares-install --device c5 dist/packages/hu.nemzetivpn.tv_0.1.3_all.ipk
 npx ares-launch --device c5 hu.nemzetivpn.tv
 ```
 

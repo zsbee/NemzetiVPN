@@ -1,5 +1,5 @@
 import { Parser } from 'htmlparser2';
-import { AppError, CHANNELS, EVENT_CHANNELS, validateCredentials, type Backend, type Channel, type Credentials, type Playback, type Status } from '../shared/types';
+import { AppError, CHANNELS, EVENT_CHANNELS, publicError, validateCredentials, type Backend, type Channel, type Credentials, type Playback, type Status } from '../shared/types';
 import { GATEWAY, GatewayTransport, gatewayUrl, proxied, type Transport } from './transport';
 
 export const LOGIN_PAGE = `${GATEWAY}/prx/000/http/localhost/login/index.html`;
@@ -25,7 +25,7 @@ export function extractMedia(html: string, base: string): string | null {
   return proxied(new URL(source, base).href);
 }
 
-export function playerRequest(html: string, streamId = 'mtv4live'): string {
+export function playerRequest(html: string, streamId = 'mtv4live', sourceUrl = `https://m4sport.hu/elo/${streamId}`): string {
   const matches = [...html.matchAll(/loadPlayer\s*\(\s*["'][^"']+["']\s*,\s*(\{[\s\S]*?\})\s*\)/g)];
   for (const match of matches) {
     let setup;
@@ -33,7 +33,7 @@ export function playerRequest(html: string, streamId = 'mtv4live'): string {
     if (setup.streamId !== streamId) continue;
     const url = new URL(PLAYER_PAGE);
     url.search = new URLSearchParams({ video: setup.streamId, noflash: 'yes', osfamily: 'webOS', browsername: 'Chrome', browserversion: '120',
-      sourceUrl: `https://m4sport.hu/elo/${streamId}`, autostart: 'true', embedded: '0', title: String(setup.title ?? streamId), contentid: setup.streamId,
+      sourceUrl, autostart: 'true', embedded: '0', title: String(setup.title ?? streamId), contentid: setup.streamId,
       ...(typeof setup.adVastPreroll === 'string' ? { vastpreroll: setup.adVastPreroll } : {}),
       ...(setup.blogId ? { blogId: String(setup.blogId) } : {}),
     }).toString();
@@ -86,6 +86,8 @@ export class NvtProvider implements Backend {
   private authenticated = false;
   private generation = 0;
   private abort?: AbortController;
+  private lastResolution = { channel: '', stage: '', error: '', host: '' };
+  async diagnostics(): Promise<object> { return { resolution: { ...this.lastResolution } }; }
   constructor(private transport: Transport = new GatewayTransport()) {}
 
   private async get(url: string, signal?: AbortSignal) {
@@ -154,20 +156,36 @@ export class NvtProvider implements Backend {
     if (!channel) throw new AppError('INVALID_REQUEST');
     if (!this.authenticated) throw new AppError('AUTH_REQUIRED');
     const epoch = this.generation;
-    const pageUrl = `${GATEWAY}/prx/000/https/m4sport.hu/elo/${channel.streamId}`;
-    const response = await this.get(pageUrl);
-    const html = response.body.toString();
-    if (isLogin(response.url, html)) { this.authenticated = false; throw new AppError('AUTH_REQUIRED'); }
-    let source = extractMedia(html, response.url);
-    if (!source) {
-      const player = await this.transport.request(playerRequest(html, channel.streamId), { referer: pageUrl });
-      if (isLogin(player.url, player.body.toString())) { this.authenticated = false; throw new AppError('AUTH_REQUIRED'); }
-      if (player.status >= 400) throw new AppError('NETWORK');
-      source = extractMedia(player.body.toString(), player.url);
+    this.lastResolution = { channel: id, stage: 'page', error: '', host: '' };
+    try {
+      const pageUrl = `${GATEWAY}/prx/000/https/m4sport.hu/elo/${channel.streamId}`;
+      const response = await this.get(pageUrl);
+      const html = response.body.toString();
+      if (isLogin(response.url, html)) { this.authenticated = false; throw new AppError('AUTH_REQUIRED'); }
+      let source = extractMedia(html, response.url);
+      if (!source) {
+        this.lastResolution.stage = 'player-setup';
+        const finalPage = new URL(response.url);
+        const upstream = /^\/prx\/000\/(https?)\/([^/]+)(\/.*)$/.exec(finalPage.pathname);
+        if (!upstream) throw new AppError('PROVIDER_CHANGED');
+        const sourceUrl = `${upstream[1]}://${upstream[2]}${upstream[3]}${finalPage.search}`;
+        const playerUrl = playerRequest(html, channel.streamId, sourceUrl);
+        this.lastResolution.stage = 'player-response';
+        const player = await this.transport.request(playerUrl, { referer: response.url });
+        if (isLogin(player.url, player.body.toString())) { this.authenticated = false; throw new AppError('AUTH_REQUIRED'); }
+        if (player.status >= 400) throw new AppError('NETWORK');
+        this.lastResolution.stage = 'media-source';
+        source = extractMedia(player.body.toString(), player.url);
+      }
+      if (epoch !== this.generation) throw new AppError('CANCELLED');
+      if (!source) throw new AppError('UNSUPPORTED_MEDIA');
+      this.lastResolution.stage = 'complete';
+      return { url: source, mime: 'application/vnd.apple.mpegurl' };
+    } catch (error) {
+      this.lastResolution.error = publicError(error);
+      if (error instanceof AppError && error.diagnosticHost) this.lastResolution.host = error.diagnosticHost;
+      throw error;
     }
-    if (epoch !== this.generation) throw new AppError('CANCELLED');
-    if (!source) throw new AppError('UNSUPPORTED_MEDIA');
-    return { url: source, mime: 'application/vnd.apple.mpegurl' };
   }
 
   async media(url: string, signal?: AbortSignal) {

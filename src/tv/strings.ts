@@ -23,6 +23,7 @@ export const errors: Record<string, string> = {
   INVALID_CREDENTIALS: 'Az e-mail-cím vagy a jelszó nem megfelelő. Ellenőrizd a belépési adatokat.',
   CHALLENGE_REQUIRED: 'Az NVT további ellenőrzést kér. Fejezd be az ellenőrzést a hivatalos oldalon.',
   NETWORK: 'Nem érhető el a szolgáltatás. Ellenőrizd az internetkapcsolatot, majd próbáld újra.',
+  PLAYBACK: 'Az adás nem indult el időben. Próbáld újra, vagy válassz másik csatornát.',
   PROVIDER_CHANGED: 'Az NVT bejelentkezési vagy lejátszási folyamata megváltozott. Az alkalmazás frissítése szükséges.',
   CAPACITY: 'A szolgáltatás most túlterhelt. Próbáld meg később.',
   UNSUPPORTED_MEDIA: 'Ez az adás jelenleg nem játszható le az alkalmazásban. A lejátszási formátum vagy a szolgáltató ellenőrzése szükséges.',
