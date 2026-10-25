@@ -1,9 +1,13 @@
 :root { color-scheme: dark; --bg:#0b1315; --panel:#142023; --text:#f4f7ee; --muted:#9eaeaa; --accent:#c3ed8a; --border:#344341; font-family:Arial,Helvetica,sans-serif; font-size:clamp(16px,1.45vw,28px); }
 * { box-sizing:border-box; }
-body { margin:0; background:radial-gradient(ellipse at 12% 20%,#20372b 0,transparent 55%),var(--bg); color:var(--text); }
+html { min-height:100%; overflow-y:auto; }
+body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); isolation:isolate; }
+/* A Hungarian tricolour stretched across the full viewport, softened for legibility. */
+body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background:linear-gradient(105deg,#0b1315ed 5%,#0b131580 100%),linear-gradient(180deg,#a52d3b 0 33.333%,#e9e5d9 33.333% 66.666%,#30684b 66.666% 100%); }
+body.playing::before { display:none; }
 [hidden] { display:none !important; }
 button,input { font:inherit; }
-button { cursor:pointer; }
+button { cursor:pointer; transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease; }
 button:disabled,input:disabled { cursor:wait; opacity:.65; }
 button,input,a { outline:none; }
 button:focus-visible,input:focus-visible,a:focus-visible { outline:4px solid var(--accent); outline-offset:5px; }
@@ -11,7 +15,7 @@ input:focus { border-color:var(--accent); }
 .login-layout { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; gap:6vw; padding:5vh 6vw 35vh; align-content:start; }
 .welcome { padding-top:1vh; }
 .brand { display:flex; align-items:center; gap:.5rem; font-size:1rem; font-weight:bold; letter-spacing:-.03em; }
-.brand-mark { display:inline-grid; place-items:center; background:var(--accent); color:var(--bg); border-radius:.3rem; width:1.65rem; height:1.65rem; font-weight:900; }
+.brand-mark { display:block; width:2.5rem; height:2.5rem; object-fit:contain; flex-shrink:0; }
 .tv-label { padding:.12rem .3rem; border:1px solid var(--border); border-radius:.2rem; font-size:.55rem; letter-spacing:.08em; color:var(--muted); }
 .eyebrow { margin:3.2vh 0 2vh; font-size:.58rem; letter-spacing:.18em; color:var(--accent); font-weight:bold; }
 h1 { font-size:clamp(40px,4.6vw,90px); font-weight:500; letter-spacing:-.055em; line-height:1.04; max-width:8em; margin:.2em 0; }
@@ -42,9 +46,11 @@ footer { position:fixed; bottom:2.5vh; left:6vw; right:6vw; display:flex; justif
 header { display:flex; align-items:center; justify-content:space-between; }
 .channels-layout h1 { font-size:3rem; }
 .channel-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:4vh 0; }
-.channel-card { text-align:left; display:flex; flex-direction:column; justify-content:space-between; gap:2rem; padding:1rem; min-height:12rem; color:var(--text); border:1px solid #677660; border-radius:.5rem; background:radial-gradient(ellipse at top right,#4a6232,transparent 75%),#26362b; }
-.channel-logo { display:block; font-size:2.4rem; font-weight:bold; letter-spacing:-.055em; }
-.channel-logo>span { font-size:1.2rem; margin-left:.25rem; font-weight:normal; letter-spacing:-.03em; }
+.channel-card { position:relative; overflow:hidden; text-align:left; display:flex; flex-direction:column; justify-content:space-between; gap:1.2rem; padding:1rem; min-height:12rem; color:var(--text); border:1px solid #82938580; border-radius:.6rem; background:linear-gradient(115deg,#19272b,#23352f); box-shadow:0 10px 28px #0002; }
+.channel-card:focus-visible { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 16px 36px #0005; }
+.channel-identity { display:flex; flex-direction:column; align-items:flex-start; gap:.5rem; }
+.channel-logo { display:block; width:11.5rem; max-width:100%; height:3.5rem; object-fit:contain; object-position:left center; }
+.channel-name { font-size:.68rem; color:#e0e8df; font-weight:600; }
 .channel-bottom { display:flex; justify-content:space-between; gap:.7rem; align-items:center; font-size:.7rem; }
 .programme { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; max-width:75%; }
 .watch-label { flex-shrink:0; }
@@ -60,3 +66,13 @@ header { display:flex; align-items:center; justify-content:space-between; }
 .player-state p { font-size:1rem; line-height:1.6; }
 .player-state button { pointer-events:auto; }
 @media(max-width:900px) { .login-layout { gap:4vw; padding-left:4vw; padding-right:4vw; } .login-card { padding:1rem; } footer { left:4vw; right:4vw; } .remote-hint { display:none; } }
+
+@media (hover:hover) {
+  .channel-card:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 16px 36px #0005,inset 0 0 50px #c3ed8a0d; }
+  .primary:hover:not(:disabled) { background:#d7f7ae; box-shadow:0 5px 20px #c3ed8a25; transform:translateY(-2px); }
+  .secondary:hover:not(:disabled) { background:#293c35; border-color:var(--accent); }
+  .text-button:hover:not(:disabled) { background:#c3ed8a18; color:#e1ffc3; }
+  input:not(:disabled):hover { border-color:#b4c4ad; }
+}
+button:active:not(:disabled) { transform:translateY(1px); }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; scroll-behavior:auto !important; } }

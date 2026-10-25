@@ -11,8 +11,12 @@ const provider = new MediaBackend(undefined, origin);
 const files: Record<string, [string, string]> = {
   '/': ['index.html', 'text/html; charset=utf-8'], '/index.html': ['index.html', 'text/html; charset=utf-8'],
   '/app.js': ['app.js', 'application/javascript; charset=utf-8'], '/app.css': ['app.css', 'text/css; charset=utf-8'],
+  '/assets/brand/crown-broadcast.png': ['assets/brand/crown-broadcast.png', 'image/png'],
   '/icon.png': ['icon.png', 'image/png'], '/favicon.ico': ['icon.png', 'image/png'],
 };
+for (const id of ['m1', 'm2', 'm4', 'm4plus', 'm5', 'duna', 'dunaworld']) {
+  files[`/assets/logos/${id}.png`] = [`assets/logos/${id}.png`, 'image/png'];
+}
 let lastLogin = 0;
 
 const server = http.createServer(async (request, response) => {

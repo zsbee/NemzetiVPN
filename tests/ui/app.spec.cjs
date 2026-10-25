@@ -114,8 +114,16 @@ test('preview bridge rejects cross-origin requests', async ({ request }) => {
   const result = await request.post('/api/login', { headers: { Origin: 'https://attacker.example' }, data: { email: 'viewer@example.test', password: 'synthetic-password' } });
   expect(result.status()).toBe(403);
 });
-test('the player starts synthetic HLS media and stops it when returning to channels', async ({ page }) => {
+for (const back of ['on-screen', 'remote', 'remote with hidden controls']) {
+test(`playing a channel stops and restores its tile using Back: ${back}`, async ({ page }) => {
+  const manifest = JSON.parse(await fs.readFile('dist/tv/appinfo.json', 'utf8'));
+  expect(manifest.disableBackHistoryAPI).toBe(true);
   await mockProvider(page);
+  let stops = 0;
+  await page.route('**/api/stop', route => {
+    stops++;
+    return route.fulfill({ json: { returnValue: true, data: {} } });
+  });
   await page.route('**/api/resolve', route => route.fulfill({ json: { returnValue: true, data: { url: 'http://127.0.0.1:4390/synthetic-hls/index.m3u8', mime: 'application/vnd.apple.mpegurl' } } }));
   await page.route('**/synthetic-hls/**', async route => {
     const name = new URL(route.request().url()).pathname.split('/').at(-1);
@@ -124,12 +132,22 @@ test('the player starts synthetic HLS media and stops it when returning to chann
     await route.fulfill({ contentType: name.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t', body });
   });
   await page.goto('/'); await login(page);
-  await page.getByRole('button', { name: 'Nézem' }).click();
+  await page.locator('#watch-m1').click();
   await expect.poll(() => page.locator('video').evaluate(v => v.currentTime)).toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'Vissza a csatornákhoz', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Nézem' })).toBeFocused();
+  if (back === 'on-screen') {
+    await page.getByRole('button', { name: 'Vissza a csatornákhoz', exact: true }).click();
+  } else {
+    if (back === 'remote with hidden controls') await expect(page.locator('#player-overlay')).toHaveAttribute('inert', '', { timeout: 5000 });
+    await page.evaluate(() => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 461, bubbles: true, cancelable: true })));
+  }
+  await expect(page.locator('#watch-m1')).toBeFocused();
+  await expect(page.locator('#channels-screen')).toBeVisible();
+  await expect(page.locator('#player-screen')).toBeHidden();
   await expect(page.locator('video')).not.toHaveAttribute('src');
+  expect(await page.locator('video').evaluate(v => v.paused && !v.querySelector('source'))).toBe(true);
+  await expect.poll(() => stops).toBe(1);
 });
+}
 test('native source explicitly selects HLS and cancellation clears it', async ({ page }) => {
   const source = await fs.readFile('dist/test/player.js', 'utf8');
   await page.route('**/player-test.js', route => route.fulfill({ contentType: 'application/javascript', body: source }));
@@ -181,4 +199,48 @@ test('playback overlay hides when idle and returns with cursor movement or remot
   await expect(overlay).toHaveClass(/chrome-hidden/, { timeout: 5000 });
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Nézem' })).toBeFocused();
+});
+
+test('official logos load, tiles respond to hover, and remote wheel scrolls in both directions', async ({ page }) => {
+  await mockProvider(page);
+  await page.goto('/'); await login(page);
+  const logo = page.locator('#watch .channel-logo');
+  await expect.poll(() => logo.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+  await page.locator('#watch-m1').hover();
+  await expect.poll(() => page.locator('#watch-m1').evaluate(el => getComputedStyle(el).transform)).not.toBe('none');
+  await page.mouse.wheel(0, 5);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.mouse.wheel(0, -1000);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test('programme titles refresh every minute without replacing tiles or losing focus and scroll', async ({ page }) => {
+  await mockProvider(page);
+  let requests = 0;
+  await page.route('**/api/channels', route => {
+    requests++;
+    return route.fulfill({ json: { returnValue: true, data: Array.from({ length: 7 }, (_, index) => ({
+      id: index === 0 ? 'm4' : `test${index}`, name: `Channel ${index}`, description: requests === 1 ? 'First programme' : 'Next programme',
+    })) } });
+  });
+  await page.clock.install();
+  await page.goto('/'); await login(page);
+  await expect(page.locator('#watch .programme')).toHaveText('First programme');
+  await page.locator('#watch-test4').focus();
+  await page.evaluate(() => { window.originalTile = document.getElementById('watch-test4'); window.originalScroll = scrollY; });
+  await page.clock.fastForward(60_000);
+  await expect(page.locator('#watch .programme')).toHaveText('Next programme');
+  await expect(page.locator('#watch-test4')).toBeFocused();
+  expect(await page.evaluate(() => window.originalTile === document.getElementById('watch-test4') && scrollY === window.originalScroll)).toBe(true);
+  await page.locator('#watch-test4').click();
+  const before = requests;
+  await page.clock.fastForward(120_000);
+  expect(requests).toBe(before);
+  await page.keyboard.press('Escape');
+  await expect.poll(() => requests).toBe(before + 1);
+  await page.getByRole('button', { name: 'Kijelentkezés', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Bejelentkezés', exact: true })).toBeFocused();
+  const signedOut = requests;
+  await page.clock.fastForward(120_000);
+  expect(requests).toBe(signedOut);
 });

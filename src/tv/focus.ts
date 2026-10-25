@@ -1,5 +1,19 @@
 // Arrow navigation only moves between controls when the keyboard isn't editing a field.
 export function installFocusNavigation(keyboardVisible: () => boolean, back: () => void): void {
+  const wheel = (event: WheelEvent | Event): void => {
+    if (keyboardVisible() || document.body.classList.contains('playing') || event.defaultPrevented) return;
+    if ((event.target as HTMLElement)?.closest('input, textarea, select')) return;
+    const modern = event as WheelEvent;
+    const legacy = event as Event & { wheelDelta?: number };
+    const delta = modern.deltaY || -(legacy.wheelDelta ?? 0);
+    if (!delta || modern.ctrlKey) return;
+    const unit = modern.deltaMode === 1 ? 40 : modern.deltaMode === 2 ? window.innerHeight : 1;
+    const distance = Math.sign(delta) * Math.min(window.innerHeight * .75, Math.max(80, Math.abs(delta * unit)));
+    event.preventDefault();
+    window.scrollBy({ top: distance, behavior: 'instant' });
+  };
+  document.addEventListener('wheel', wheel, { passive: false });
+  document.addEventListener('mousewheel', event => { if (!('onwheel' in document)) wheel(event); }, { passive: false });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' || event.keyCode === 461) {
       if (keyboardVisible()) return; // Let webOS dismiss its keyboard first.

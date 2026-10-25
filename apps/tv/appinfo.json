@@ -8,5 +8,6 @@
   "icon": "icon.png",
   "largeIcon": "largeicon.png",
   "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
   "requiredACG": []
 }

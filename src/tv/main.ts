@@ -17,6 +17,9 @@ let viewEpoch = 0;
 let mediaRecoveryAttempted = false;
 let selectedChannel: Channel = M4;
 let channels: Channel[] = CHANNELS;
+const PROGRAMME_REFRESH_MS = 60_000;
+let programmeTimer: ReturnType<typeof setTimeout> | undefined;
+let catalogueRequest = 0;
 
 for (const element of document.querySelectorAll<HTMLElement>('[data-text]')) {
   element.textContent = hu[element.dataset.text as keyof typeof hu];
@@ -34,6 +37,8 @@ function announce(message = '', error = false): void {
   target.classList.toggle('error', error);
 }
 function show(next: typeof screen): void {
+  clearTimeout(programmeTimer);
+  ++catalogueRequest;
   screen = next;
   $('login-screen').hidden = next !== 'login';
   $('channels-screen').hidden = next !== 'channels';
@@ -56,35 +61,72 @@ function updateAccount(): void {
   $('account-saved').textContent = account.remembered ? hu.saved : hu.sessionOnly;
   $('forget').hidden = !account.remembered;
 }
-function showChannels(): void {
+function showChannels(refresh = false): void {
   show('channels'); updateAccount();
   renderChannels();
   announce(account.storageWarning ? hu.storageWarning : '');
+  if (refresh) void refreshProgrammes();
+  else scheduleProgrammeRefresh();
   ($(selectedChannel.id === 'm4' ? 'watch' : `watch-${selectedChannel.id}`) ?? $('watch'))?.focus();
 }
 function renderChannels(): void {
   const grid = $('channel-grid');
-  grid.replaceChildren();
+  const active = document.activeElement;
+  const focusedId = active?.closest('.channel-card')?.id;
   for (const channel of channels) {
-    const button = document.createElement('button');
-    button.id = channel.id === 'm4' ? 'watch' : `watch-${channel.id}`;
-    button.className = 'channel-card';
+    const id = channel.id === 'm4' ? 'watch' : `watch-${channel.id}`;
+    let button = document.getElementById(id) as HTMLButtonElement | null;
+    if (!button) {
+      button = document.createElement('button');
+      button.id = id;
+      button.className = 'channel-card';
+      const live = document.createElement('span'); live.className = 'live-dot'; live.textContent = 'ÉLŐ';
+      const identity = document.createElement('span'); identity.className = 'channel-identity';
+      const logo = document.createElement('img'); logo.className = 'channel-logo'; logo.alt = '';
+      const logoId = channel.id.startsWith('m4sport') ? 'm4' : channel.id;
+      if (CHANNELS.some(item => item.id === logoId)) logo.src = `assets/logos/${logoId}.png`;
+      else logo.hidden = true;
+      logo.addEventListener('error', () => { logo.hidden = true; });
+      const name = document.createElement('span'); name.className = 'channel-name';
+      identity.append(logo, name);
+      const bottom = document.createElement('span'); bottom.className = 'channel-bottom';
+      const description = document.createElement('span'); description.className = 'programme';
+      const watch = document.createElement('span'); watch.className = 'watch-label'; watch.textContent = hu.watch;
+      bottom.append(description, watch); button.append(live, identity, bottom);
+      const channelId = channel.id;
+      button.addEventListener('click', () => {
+        selectedChannel = channels.find(item => item.id === channelId)!; void play();
+      });
+    }
     button.setAttribute('aria-label', channel.id === 'm4' ? hu.watch : `${channel.name} élő adás`);
-    const live = document.createElement('span'); live.className = 'live-dot'; live.textContent = 'ÉLŐ';
-    const name = document.createElement('span'); name.className = 'channel-logo'; name.textContent = channel.name;
-    const bottom = document.createElement('span'); bottom.className = 'channel-bottom';
-    const description = document.createElement('span'); description.className = 'programme'; description.textContent = channel.description;
-    const watch = document.createElement('span'); watch.className = 'watch-label'; watch.textContent = hu.watch;
-    bottom.append(description, watch); button.append(live, name, bottom);
-    button.addEventListener('click', () => { selectedChannel = channel; void play(); });
-    grid.append(button);
+    button.querySelector('.channel-name')!.textContent = channel.name;
+    button.querySelector('.programme')!.textContent = channel.description;
+    // Existing tiles stay in place so refreshes preserve focus, hover, and scroll.
+    if (grid.children[channels.indexOf(channel)] !== button) grid.insertBefore(button, grid.children[channels.indexOf(channel)] ?? null);
   }
+  const ids = new Set(channels.map(channel => channel.id === 'm4' ? 'watch' : `watch-${channel.id}`));
+  for (const button of [...grid.children]) if (!ids.has(button.id)) button.remove();
+  if (focusedId && !document.getElementById(focusedId)) $('watch')?.focus({ preventScroll: true });
 }
 async function loadChannels(): Promise<void> {
+  const request = ++catalogueRequest;
   try {
     const loaded = await backend.channels();
-    if (Array.isArray(loaded) && loaded.length) channels = loaded;
-  } catch { channels = CHANNELS; }
+    if (request === catalogueRequest && Array.isArray(loaded) && loaded.length) channels = loaded;
+  } catch { /* Keep the last programme information during a temporary outage. */ }
+}
+function scheduleProgrammeRefresh(): void {
+  clearTimeout(programmeTimer);
+  if (screen === 'channels' && !document.hidden) programmeTimer = setTimeout(() => { void refreshProgrammes(); }, PROGRAMME_REFRESH_MS);
+}
+async function refreshProgrammes(): Promise<void> {
+  clearTimeout(programmeTimer);
+  if (screen !== 'channels' || document.hidden) return;
+  const epoch = viewEpoch;
+  await loadChannels();
+  if (epoch !== viewEpoch || screen !== 'channels' || document.hidden) return;
+  renderChannels();
+  scheduleProgrammeRefresh();
 }
 function stopPlayback(stopService = false): void {
   player.stop();
@@ -151,7 +193,7 @@ async function play(resetRecovery = true): Promise<void> {
   }
 }
 $('retry-playback').addEventListener('click', () => { void play(); });
-$('back-player').addEventListener('click', () => { ++viewEpoch; stopPlayback(true); showChannels(); });
+$('back-player').addEventListener('click', () => { ++viewEpoch; stopPlayback(true); showChannels(true); });
 video.addEventListener('playing', () => { $('player-status').textContent = ''; });
 async function playbackFailed(): Promise<void> {
   if (screen !== 'player' || player.mode === 'stopped') return;
@@ -172,6 +214,8 @@ $('forget').addEventListener('click', async () => {
   catch (error) { announce(errorText(error), true); }
 });
 $('logout').addEventListener('click', async () => {
+  clearTimeout(programmeTimer);
+  ++catalogueRequest;
   ++viewEpoch; stopPlayback();
   try {
     const result = await account.logout();
@@ -186,17 +230,19 @@ window.addEventListener('keyboardStateChange', event => {
 });
 installFocusNavigation(() => keyboard, () => {
   if (!onTV() && document.activeElement?.matches('input')) { (document.activeElement as HTMLElement).blur(); $('sign-in').focus(); return; }
-  if (screen === 'player') { ++viewEpoch; stopPlayback(true); showChannels(); }
+  if (screen === 'player') { ++viewEpoch; stopPlayback(true); showChannels(true); }
   else if (onTV()) window.PalmSystem?.platformBack();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
+    clearTimeout(programmeTimer);
+    ++catalogueRequest;
     maskPassword();
     if (screen === 'player') { ++viewEpoch; stopPlayback(); showChannels(); }
     backend.release();
-  }
+  } else if (screen === 'channels') void refreshProgrammes();
 });
-window.addEventListener('pagehide', () => { stopPlayback(); backend.release(); });
+window.addEventListener('pagehide', () => { clearTimeout(programmeTimer); ++catalogueRequest; stopPlayback(); backend.release(); });
 
 async function init(): Promise<void> {
   setBusy(true); announce(hu.restoring);

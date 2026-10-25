@@ -16,6 +16,10 @@ Initial hardware target: **LG OLED C5**. Start with webOS 25 compatibility and c
 
 The channel list includes M1, M2 / Petőfi TV, M4 Sport, M4 Sport +, M5, Duna, and Duna World. Active M4 event feeds are discovered from the provider's current catalogue. Channels may be off air or require additional playback support; their presence is not a claim that every broadcast has been tested. On-demand browsing is a later possibility. QR/phone pairing is outside the MVP; login is designed to work on the TV without an additional server.
 
+The browsing screens use stretched Hungarian tricolour backgrounds and locally bundled broadcaster logos. Tiles and buttons respond to pointer hover, with visible remote focus and reduced-motion support. The remote wheel scrolls the page, including small wheel steps. Programme titles refresh every 60 seconds while the channel list is visible, and immediately on return from playback or app suspension; existing tiles retain focus and scroll position. These interactions are covered by browser tests; the updated wheel handling still needs confirmation on the C5.
+
+Logo source URLs are recorded in [the asset notes](apps/tv/assets/logos/SOURCES.md).
+
 ## Try the preview
 
 Use Node.js 22 or newer:
