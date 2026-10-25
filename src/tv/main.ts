@@ -8,7 +8,9 @@ import { TvPlayer } from './player';
 import { GuideStore } from './guide';
 import { LiveUI } from './live-ui';
 import { nowNext, programmeTime } from '../shared/programmes';
+import { installChannelAppearance, setChannelAmbient } from './appearance';
 
+installChannelAppearance(document.getElementById('channel-grid')!);
 const backend = new AppBackend();
 const account = new Account(backend, new DeviceVault());
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -48,6 +50,7 @@ function announce(message = '', error = false): void {
   const target = screen === 'login' ? $('login-message') : $('app-message');
   target.textContent = message;
   target.classList.toggle('error', error);
+  target.classList.toggle('is-loading', busy && !error && screen === 'login');
 }
 function show(next: typeof screen): void {
   clearTimeout(programmeTimer);
@@ -55,6 +58,7 @@ function show(next: typeof screen): void {
   if (next !== 'player') live.reset();
   if (next !== 'player') { clearTimeout(noticeTimer); $('player-notice').textContent = ''; }
   screen = next;
+  setChannelAmbient(next === 'login' ? undefined : selectedChannel.id);
   $('login-screen').hidden = next !== 'login';
   $('channels-screen').hidden = next !== 'channels';
   $('player-screen').hidden = next !== 'player';
@@ -67,6 +71,7 @@ function maskPassword(): void {
 }
 function setBusy(value: boolean): void {
   busy = value;
+  if (!value) $('login-message').classList.remove('is-loading');
   $('login-form').setAttribute('aria-busy', String(value));
   $('sign-in').textContent = value ? hu.signingIn : hu.signIn;
   for (const e of document.querySelectorAll<HTMLInputElement | HTMLButtonElement>('#login-form input, #login-form button')) e.disabled = value;
@@ -96,6 +101,7 @@ function renderChannels(): void {
       button = document.createElement('button');
       button.id = id;
       button.className = 'channel-card';
+      button.dataset.channel = channel.id;
       const live = document.createElement('span'); live.className = 'live-dot'; live.textContent = 'ÉLŐ';
       const identity = document.createElement('span'); identity.className = 'channel-identity';
       const logo = document.createElement('img'); logo.className = 'channel-logo'; logo.alt = '';
@@ -198,7 +204,7 @@ async function play(resetRecovery = true, changingQuality = false): Promise<void
   stopPlayback();
   show('player'); live.channelChanged();
   guide.refresh();
-  $('player-status').textContent = hu.loading;
+  playerStatus(hu.loading, true);
   $('retry-playback').hidden = true;
   video.focus({ preventScroll: true });
   try {
@@ -219,14 +225,18 @@ async function play(resetRecovery = true, changingQuality = false): Promise<void
       stopPlayback(); show('login'); email.value = account.email;
       announce(errorText(error), true); $('sign-in').focus();
     } else {
-      $('player-status').textContent = errorText(error);
+      playerStatus(errorText(error));
       $('retry-playback').hidden = code === 'UNSUPPORTED_MEDIA';
     }
   }
 }
 $('retry-playback').addEventListener('click', () => { void play(); });
 $('back-player').addEventListener('click', () => { ++viewEpoch; stopPlayback(true); showChannels(true); });
-video.addEventListener('playing', () => { $('player-status').textContent = ''; });
+function playerStatus(message: string, loading = false): void {
+  $('player-status').textContent = message;
+  $('player-status').classList.toggle('is-loading', loading);
+}
+video.addEventListener('playing', () => { playerStatus(''); });
 async function playbackFailed(): Promise<void> {
   if (screen !== 'player') return;
   const epoch = viewEpoch;
@@ -241,7 +251,7 @@ async function playbackFailed(): Promise<void> {
     } catch { /* Surface one recoverable failure without starting another retry loop. */ }
   }
   if (epoch !== viewEpoch) return;
-  $('player-status').textContent = hu.playFailed;
+  playerStatus(hu.playFailed);
   $('retry-playback').hidden = false;
 }
 

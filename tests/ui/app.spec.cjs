@@ -253,3 +253,42 @@ test('programme titles refresh every minute without replacing tiles or losing fo
   await page.clock.fastForward(120_000);
   expect(requests).toBe(signedOut);
 });
+
+test('channel ambience follows pointer and remote focus, and remote input clears tilt', async ({ page }) => {
+  await mockProvider(page);
+  await page.goto('/'); await login(page);
+  const ambient = () => page.locator('body').evaluate(body => body.style.getPropertyValue('--channel-ambient'));
+  await expect(page.locator('#watch')).toBeFocused();
+  expect(await ambient()).toBe('#cf2944');
+  const duna = page.locator('#watch-duna');
+  await duna.hover({ position: { x: 50, y: 50 } });
+  await expect(duna).toHaveClass(/pointer-active/);
+  expect(await ambient()).toBe('#169ede');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.pointer-active')).toHaveCount(0);
+  await expect(page.locator('#watch-m1')).toBeFocused();
+  expect(await ambient()).toBe('#414b96');
+  await page.locator('#watch-m2').focus();
+  expect(await ambient()).toBe('#70af35');
+  await page.locator('#watch-m5').focus();
+  expect(await ambient()).toBe('#dd792b');
+});
+
+test('reduced motion keeps tiles still and loading indicator stops after an error', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await mockProvider(page);
+  let release;
+  await page.route('**/api/resolve', async route => {
+    await new Promise(resolve => { release = resolve; });
+    await route.fulfill({ json: { returnValue: false, code: 'UNSUPPORTED_MEDIA' } });
+  });
+  await page.goto('/'); await login(page);
+  await page.locator('#watch').hover();
+  await expect(page.locator('.pointer-active')).toHaveCount(0);
+  await page.locator('#watch').click();
+  await expect(page.locator('#player-status')).toHaveClass(/is-loading/);
+  await expect(page.locator('#player-status')).toHaveText('Adás betöltése');
+  expect(await page.locator('#player-status').evaluate(el => getComputedStyle(el, '::before').animationName)).toBe('none');
+  release();
+  await expect(page.locator('#player-status')).not.toHaveClass(/is-loading/);
+});

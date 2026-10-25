@@ -2,8 +2,8 @@
 * { box-sizing:border-box; }
 html { min-height:100%; overflow-y:auto; }
 body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); isolation:isolate; }
-/* A Hungarian tricolour stretched across the full viewport, softened for legibility. */
-body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background:linear-gradient(105deg,#0b1315ed 5%,#0b131580 100%),linear-gradient(180deg,#a52d3b 0 33.333%,#e9e5d9 33.333% 66.666%,#30684b 66.666% 100%); }
+/* A logo-coloured ambient field, kept dark behind the interface. */
+body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:var(--channel-ambient,#28384b); background-image:radial-gradient(ellipse at 20% 15%,#0b101828,#0b1018ed 80%); transition:background-color .65s ease; }
 body.playing::before { display:none; }
 [hidden] { display:none !important; }
 button,input { font:inherit; }
@@ -46,7 +46,7 @@ footer { position:fixed; bottom:2.5vh; left:6vw; right:6vw; display:flex; justif
 header { display:flex; align-items:center; justify-content:space-between; }
 .channels-layout h1 { font-size:3rem; }
 .channel-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:4vh 0; }
-.channel-card { position:relative; overflow:hidden; text-align:left; display:flex; flex-direction:column; justify-content:space-between; gap:1.2rem; padding:1rem; min-height:12rem; color:var(--text); border:1px solid #82938580; border-radius:.6rem; background:linear-gradient(115deg,#19272b,#23352f); box-shadow:0 10px 28px #0002; }
+.channel-card { position:relative; overflow:hidden; text-align:left; display:flex; flex-direction:column; justify-content:space-between; gap:1.2rem; padding:1rem; min-height:12rem; color:var(--text); border:1px solid #82938580; border-radius:.6rem; background:linear-gradient(135deg,#ffffff12,#ffffff05); box-shadow:0 10px 28px #0002; }
 .channel-card:focus-visible { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 16px 36px #0005; }
 .channel-identity { display:flex; flex-direction:column; align-items:flex-start; gap:.5rem; }
 .channel-logo { display:block; width:11.5rem; max-width:100%; height:3.5rem; object-fit:contain; object-position:left center; }
@@ -68,7 +68,7 @@ header { display:flex; align-items:center; justify-content:space-between; }
 @media(max-width:900px) { .login-layout { gap:4vw; padding-left:4vw; padding-right:4vw; } .login-card { padding:1rem; } footer { left:4vw; right:4vw; } .remote-hint { display:none; } }
 
 @media (hover:hover) {
-  .channel-card:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 16px 36px #0005,inset 0 0 50px #c3ed8a0d; }
+  .channel-card:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 16px 36px #0005,inset 0 1px 0 #ffffff40; }
   .primary:hover:not(:disabled) { background:#d7f7ae; box-shadow:0 5px 20px #c3ed8a25; transform:translateY(-2px); }
   .secondary:hover:not(:disabled) { background:#293c35; border-color:var(--accent); }
   .text-button:hover:not(:disabled) { background:#c3ed8a18; color:#e1ffc3; }
@@ -86,11 +86,10 @@ button:active:not(:disabled) { transform:translateY(1px); }
   .glass,.login-card { background:linear-gradient(145deg,#263431dc,#101a19ed); backdrop-filter:blur(16px) saturate(125%); }
 }
 .login-card { border-radius:1.3rem; padding:1.25rem 1.4rem .7rem; }
-body::before { background:radial-gradient(ellipse at 18% 10%,#9c35452e,transparent 55%),linear-gradient(105deg,#0b1315f2 5%,#0b1315c9 100%),linear-gradient(180deg,#a52d3b 0 33.333%,#e9e5d9 33.333% 66.666%,#30684b 66.666% 100%); }
 input:not([type=checkbox]) { border-radius:.55rem; background:#091211aa; border-color:#ffffff35; }
 .primary,.secondary { border-radius:2rem; }
 .secondary { background:#ffffff0d; border-color:#ffffff30; }
-.channel-card { border-radius:1.1rem; border-color:#ffffff30; min-height:11rem; background:linear-gradient(135deg,#293c38e8,#142321f2); box-shadow:inset 0 1px 0 #ffffff1f,0 14px 40px #0003; }
+.channel-card { border-radius:1.1rem; border-color:#ffffff30; min-height:11rem; background:linear-gradient(135deg,#ffffff12,#ffffff05); box-shadow:inset 0 1px 0 #ffffff1f,0 14px 40px #0003; }
 .channel-card:focus-visible { transform:translateY(-3px) scale(1.015); }
 .channel-bottom { align-items:flex-end; }
 .card-programmes { display:flex; flex-direction:column; min-width:0; flex:1; }
@@ -159,3 +158,19 @@ input:not([type=checkbox]) { border-radius:.55rem; background:#091211aa; border-
 /* Keep the back label beneath its icon, clear of programme information. */
 .focus-label { bottom:auto; top:calc(100% + .55rem); }
 .player-remote-hint { margin-left:4rem; }
+
+/* Clear glass keeps its material neutral as the ambient colour changes. */
+.channel-card { transition:transform .24s ease,border-color .2s ease,box-shadow .24s ease; }
+@supports (backdrop-filter:blur(16px)) {
+  .channel-card { backdrop-filter:blur(16px); }
+}
+.channel-card::after { content:''; position:absolute; inset:0; pointer-events:none; border-radius:inherit; opacity:0; background:radial-gradient(circle at var(--shine-x,50%) var(--shine-y,50%),#ffffff19,transparent 65%); transition:opacity .25s ease; }
+.channel-card.pointer-active { transform:perspective(1000px) translateY(-4px) rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg)) scale(1.015); border-color:#ffffff80; box-shadow:inset 0 1px 0 #ffffff40,0 20px 40px #0005; }
+.channel-card.pointer-active::after { opacity:1; }
+/* A small satin ring shares the interface's light borders. */
+.is-loading::before { content:''; display:inline-block; width:.85em; height:.85em; margin-right:.65em; vertical-align:-.1em; border:2px solid #ffffff30; border-top-color:currentColor; border-radius:50%; animation:loading-turn 1s linear infinite; }
+@keyframes loading-turn { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) {
+  .is-loading::before { animation:none; }
+  .channel-card.pointer-active { transform:none; }
+}
