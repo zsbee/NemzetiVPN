@@ -1,6 +1,6 @@
 {
   "name": "nemzeti-vpn-tv",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "An independent NVT live TV client for LG webOS",
   "engines": {

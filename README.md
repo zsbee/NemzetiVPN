@@ -39,7 +39,7 @@ The preview and installed app use the same authentication and playback code. The
 npm run package:tv
 ```
 
-The package is written to `dist/packages/hu.nemzetivpn.tv_0.1.3_all.ipk`. Follow the [TV setup guide](docs/TV_SETUP.md) to enable Developer Mode, connect the TV, and install it. No TV address or private device key is committed.
+The package is written to `dist/packages/hu.nemzetivpn.tv_0.1.4_all.ipk`. Follow the [TV setup guide](docs/TV_SETUP.md) to enable Developer Mode, connect the TV, and install it. No TV address or private device key is committed.
 
 ## Checks
 

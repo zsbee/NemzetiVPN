@@ -29,7 +29,7 @@ Add a device named `c5` with the TV's actual IP address, port `9922`, and user `
 npx ares-novacom --device c5 --getkey
 npx ares-device --system-info --device c5
 npm run package:tv
-npx ares-install --device c5 dist/packages/hu.nemzetivpn.tv_0.1.3_all.ipk
+npx ares-install --device c5 dist/packages/hu.nemzetivpn.tv_0.1.4_all.ipk
 npx ares-launch --device c5 hu.nemzetivpn.tv
 ```
 
