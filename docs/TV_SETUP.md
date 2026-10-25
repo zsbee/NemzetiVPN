@@ -1,6 +1,8 @@
 # Install the feasibility build on the LG OLED C5
 
-This first hardware test checks the system keyboard, credential persistence, app-service permissions, and native playback. The owner has confirmed Developer Mode is not enabled yet.
+This first hardware test checks the system keyboard, credential persistence, app-service permissions, and native playback.
+
+First installation completed on 2026-10-25. LG's tools confirmed model `OLED65C59LB.DVSQLJP`, SDK `10.3.1`, firmware `33.31.68`, and successful installation and launch of `hu.nemzetivpn.tv`. The running-app listing includes the app. Keyboard, NVT sign-in, credential persistence, and playback still require verification on the television.
 
 ## Prepare the television
 

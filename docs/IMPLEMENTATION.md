@@ -9,7 +9,7 @@
 | Channels | Seven main TV channels configured; public page bootstraps checked for each. Current catalogue supplies programme titles and active M4 event feeds. | Authenticated playback for each channel and broadcast-specific restrictions. |
 | Saved credentials | Browser tests verify encrypted storage, non-exportability, tamper rejection, reload, deletion, and automatic reauthentication. | IndexedDB/CryptoKey support and persistence in the packaged C5 app across restarts and updates. |
 | Remote UX | Desktop tests cover focus, password masking, field progression, Back from playback, and space for the TV keyboard. | Real LG keyboard events and pointer/directional behavior. |
-| Packaging | LG CLI creates the app/service IPK. | Install, service caller identity, permissions, and loopback reachability on the television. |
+| Packaging | LG CLI created the app/service IPK, installed it on the owner's C5, and confirmed the app launched and is running (firmware 33.31.68, SDK 10.3.1). | Service caller identity, permissions, and loopback reachability on the television. |
 
 Desktop UI tests use only synthetic accounts. A three-second locally generated HLS fixture exercises real browser playback. Fetching authorized M4 media establishes the request path; it does not substitute for watching it on the television.
 
