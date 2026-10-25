@@ -1,0 +1,5 @@
+{
+  "id": "hu.nemzetivpn.tv.service",
+  "description": "NVT authentication and media resolution for NemzetiVPN TV",
+  "services": [{ "name": "hu.nemzetivpn.tv.service", "description": "App-owned NVT session" }]
+}

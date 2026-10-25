@@ -1,0 +1,12 @@
+{
+  "id": "hu.nemzetivpn.tv",
+  "version": "0.1.0",
+  "vendor": "NemzetiVPN contributors",
+  "type": "web",
+  "main": "index.html",
+  "title": "NemzetiVPN",
+  "icon": "icon.png",
+  "largeIcon": "largeicon.png",
+  "resolution": "1920x1080",
+  "requiredACG": []
+}

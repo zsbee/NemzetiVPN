@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:*; media-src http://127.0.0.1:* blob:; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>NemzetiVPN</title>
+  <link rel="stylesheet" href="app.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main>
+    <section id="login-screen" class="login-layout" aria-label="Bejelentkezés">
+      <div class="welcome">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">N</span> NemzetiVPN <span class="tv-label">TV</span></div>
+        <p class="eyebrow">MAGYAR CSATORNÁK · LG WEBOS</p>
+        <h1 data-text="tagline"></h1>
+        <p class="lead" data-text="intro"></p>
+        <div class="channel-pills" aria-label="Elsőként támogatott csatorna"><span>M4 SPORT</span><span class="live-dot">ÉLŐ</span></div>
+      </div>
+      <div class="login-card">
+        <h2 data-text="signInTitle"></h2>
+        <p class="muted" data-text="signInIntro"></p>
+        <form id="login-form" autocomplete="off">
+          <div class="fields">
+            <label for="email" data-text="email"></label>
+            <input id="email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254" required>
+            <div class="password-label"><label for="password" data-text="password"></label><button id="show-password" class="text-button" type="button" aria-pressed="false" data-text="show"></button></div>
+            <input id="password" name="password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" maxlength="1024" required>
+          </div>
+          <label class="remember"><input id="remember" type="checkbox" checked><span data-text="remember"></span></label>
+          <p class="remember-help" data-text="rememberHelp"></p>
+          <button id="sign-in" class="primary" type="submit" data-text="signIn"></button>
+          <p id="login-message" class="message" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+      <footer><span data-text="footer"></span><span class="remote-hint">↑ ↓ ← → &nbsp; Navigálás &nbsp; · &nbsp; OK &nbsp; Kiválasztás</span></footer>
+    </section>
+    <section id="channels-screen" class="channels-layout" hidden aria-label="Csatornák">
+      <header><div class="brand"><span class="brand-mark" aria-hidden="true">N</span> NemzetiVPN</div><button id="logout" class="secondary" data-text="logout"></button></header>
+      <p class="eyebrow">ITTHON VAGY.</p>
+      <h1 data-text="channels"></h1>
+      <p class="muted" data-text="probe"></p>
+      <div id="channel-grid" class="channel-grid"></div>
+      <p id="app-message" class="message" role="status" aria-live="polite"></p>
+      <div class="account"><div><p id="account-email"></p><p id="account-saved" class="muted"></p></div><button id="forget" class="text-button" data-text="forget"></button></div>
+    </section>
+    <section id="player-screen" hidden aria-label="Lejátszó">
+      <video id="video" controls playsinline></video>
+      <div class="player-overlay"><div><span class="live-dot">ÉLŐ</span><h2 id="player-title"></h2></div><button id="back-player" class="secondary" data-text="back"></button></div>
+      <div class="player-state"><p id="player-status" role="status" aria-live="polite"></p><button id="retry-playback" class="primary" hidden data-text="retry"></button></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -44,3 +44,13 @@ NVT documents individual eligible accounts, prohibits transferring login details
 ## Decision rule
 
 Record a tested login-to-native-playback route on the real C5 before committing to a framework or promising standalone installation. If every viable route needs an additional device, report that requirement explicitly and revise the product plan.
+
+## Implementation follow-up — 2026-10-25
+
+An isolated, unauthenticated HTTP session successfully inspected the public login page by retaining its normal cookie-test cookies through redirects. The page exposes a standard POST form with `uname`, `pwd`, `pwd1`, `pwd2`, and a method supplied by `an_login.js`. The current method is a single LDAP method, without enabled hardware-ID or client-security requirements in the inspected configuration. No refresh-token endpoint was observed. The owner subsequently signed into the custom local preview successfully.
+
+Chrome's authenticated network response showed an ordinary HLS source in the `player.php` playlist. Master/variant playlists and video segments are proxied through NVT to Connectmedia CDN nodes; AES-128 key references also occur. No copied stream URL, cookie, key value, or captured provider media is stored in this repository. A later request probe using the preview's own session fetched the master playlist, a variant, a video segment, and its key successfully through the app's loopback relay.
+
+Public live-page bootstraps were checked for M1, M2, M4 Sport +, M5, Duna, and Duna World in addition to M4. The stream catalogue has a `streams` array containing `code`, `type`, and programme metadata; only currently live recognized event feeds are added. This is discovery evidence, not verified playback of every channel.
+
+The current packaged-app candidate uses an app-owned JS service for gateway cookies and a loopback-only media relay. Saved credentials use an encrypted Web Crypto/IndexedDB vault in the app origin, with explicit limitations documented in [implementation status](IMPLEMENTATION.md). All relevant hardware and service-lifecycle checks remain pending on the owner's C5.

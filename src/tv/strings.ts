@@ -1,0 +1,32 @@
+export const hu = {
+  tagline: 'Otthon, bárhol.',
+  intro: 'Kedvenc magyar csatornáid. Egy helyen, a tévéden.',
+  signInTitle: 'Üdv újra itthon.',
+  signInIntro: 'Jelentkezz be a Nemzeti Virtuális Tér fiókoddal.',
+  email: 'E-mail-cím', password: 'Jelszó', show: 'Jelszó megjelenítése',
+  hide: 'Jelszó elrejtése', remember: 'Maradjak bejelentkezve',
+  rememberHelp: 'A belépési adatok mentése ezen a tévén az automatikus bejelentkezéshez.',
+  signIn: 'Bejelentkezés', signingIn: 'Bejelentkezés…', restoring: 'Bejelentkezés visszaállítása…',
+  channels: 'Élő adás', watch: 'Nézem', back: 'Vissza a csatornákhoz',
+  logout: 'Kijelentkezés', forget: 'Mentett belépés törlése', retry: 'Újrapróbálás',
+  loading: 'Adás betöltése…', saved: 'Belépés mentve ezen a tévén',
+  sessionOnly: 'A belépés nincs mentve', playFailed: 'Az adás nem indult el. Próbáld újra.',
+  storageWarning: 'A belépési adatok mentése nem sikerült. A következő indításkor újra be kell jelentkezned.',
+  footer: 'Független alkalmazás · Meglévő NVT-fiók szükséges',
+  probe: 'Válassz csatornát, és nézd élőben a kedvenc műsoraidat.',
+  loggedOut: 'Kijelentkeztél. A mentett belépési adatokat töröltük erről az eszközről.',
+  remoteLogout: 'A helyi adatokat töröltük. Az NVT-oldali kijelentkezést nem sikerült megerősíteni.',
+};
+
+export const errors: Record<string, string> = {
+  AUTH_REQUIRED: 'A folytatáshoz jelentkezz be újra.',
+  INVALID_CREDENTIALS: 'Az e-mail-cím vagy a jelszó nem megfelelő. Ellenőrizd a belépési adatokat.',
+  CHALLENGE_REQUIRED: 'Az NVT további ellenőrzést kér. Fejezd be az ellenőrzést a hivatalos oldalon.',
+  NETWORK: 'Nem érhető el a szolgáltatás. Ellenőrizd az internetkapcsolatot, majd próbáld újra.',
+  PROVIDER_CHANGED: 'Az NVT bejelentkezési vagy lejátszási folyamata megváltozott. Az alkalmazás frissítése szükséges.',
+  CAPACITY: 'A szolgáltatás most túlterhelt. Próbáld meg később.',
+  UNSUPPORTED_MEDIA: 'Ez az adás jelenleg nem játszható le az alkalmazásban. A lejátszási formátum vagy a szolgáltató ellenőrzése szükséges.',
+  STORAGE: 'A mentett belépési adatok nem érhetők el. Az eszköz tárolóját ellenőrizni kell.',
+  INVALID_REQUEST: 'Add meg az e-mail-címedet és a jelszavadat.',
+  CANCELLED: '',
+};

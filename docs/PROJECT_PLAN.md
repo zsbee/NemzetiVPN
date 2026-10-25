@@ -1,5 +1,7 @@
 # Project plan
 
+Implementation update (2026-10-25): the local login, channel browser, encrypted credential vault, automatic reauthentication, provider adapter, loopback HLS relay, and IPK build are implemented. The owner confirmed successful NVT login in the preview, and authenticated M4 media requests passed. Seven base TV channels and active sports event discovery are present. Real C5 validation remains open. See [implementation status](IMPLEMENTATION.md) and [TV setup](TV_SETUP.md); milestone exit criteria below are not yet satisfied by desktop checks alone.
+
 ## Outcome and scope
 
 Build an installable LG webOS app for an LG OLED C5 that signs an eligible viewer into NVT, lists available live channels, and plays a selected channel fullscreen with remote controls. Make the code suitable for later open-source publication and independent use with other viewers' own accounts.
