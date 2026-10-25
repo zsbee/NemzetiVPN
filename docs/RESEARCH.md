@@ -39,6 +39,7 @@ NVT documents individual eligible accounts, prohibits transferring login details
 6. Can a supported browser-mediated login return control to our UI? Do not assume system-browser cookies are shared with apps or that a cross-origin iframe is permitted.
 7. What happens after standby, cold launch, expiry, connection loss, and another device signing in?
 8. What distribution conditions apply to a third-party client? Review the relevant provider terms and LG submission requirements before public distribution; store approval is not established.
+9. What protected credential storage can a third-party C5 app actually access? Persistent email/password storage is required by the owner for automatic reauthentication. Verify an OS secret store or document an app-private encryption/key-protection design; no accessible OS secret-store API has yet been established. Test storage through cold restart, sign-out, and app updates. Do not infer third-party API access from LG platform security marketing or webOS OSE documentation.
 
 ## Decision rule
 

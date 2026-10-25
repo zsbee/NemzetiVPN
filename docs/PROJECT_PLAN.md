@@ -10,6 +10,8 @@ On-demand catalogues, recordings, downloads, multi-account switching, casting, p
 
 Login uses Email and Password fields with the built-in webOS virtual keyboard, a Show password control, and an explicit Sign in button. Reserve space for the keyboard and support both directional navigation and the Magic Remote pointer. No external login server is planned. See [authentication UX](AUTHENTICATION.md) for focus behavior, errors, and session retention.
 
+Persistent on-device email/password storage and automatic authentication recovery are MVP requirements. Stay signed in is enabled by default with a clear explanation and can be disabled. Verify a protected credential store on the C5; use valid sessions and provider-supported refresh first, then automatically sign in using saved credentials when necessary. Sign-out deletes both credentials and sessions. No provider refresh-token API has been established.
+
 ## Architecture to evaluate
 
 Preferred product shape: a packaged webOS application with a small TV UI, a provider adapter, and the native HTML video player. Use a bundled JS service only where its networking/session capabilities are needed. This is a hypothesis, not an established authentication solution.
@@ -47,7 +49,8 @@ Evaluate the least complex viable route first. Do not assume arbitrary native-pl
 3. Inspect one successful live playback request chain: resolver, manifest, segments, tokens, and any encryption/license traffic. Determine required credentials and origins.
 4. Build the smallest disposable TV probe to authenticate and play M4 through the normal authorized access path. Try native HLS first if the stream is HLS; add another supported playback path only when evidence requires it.
 5. Test system-keyboard entry, password masking/reveal, keyboard dismissal with Back, focus after errors, signed-out failure, wrong credentials, expiry, logout, and relaunch. Record limits separately from desktop observations.
-6. Write a short architecture decision with the selected route, alternatives rejected, minimum platform version, and session persistence policy.
+6. Prove protected credential persistence across a cold restart and automatic reauthentication after session expiry. Verify key protection, third-party app permissions, and deletion on sign-out. Memory-only probes do not satisfy the final requirement.
+7. Write a short architecture decision with the selected route, alternatives rejected, minimum platform version, credential storage protections and limitations, and session persistence policy.
 
 **Exit criterion:** independent login on the C5, at least 30 minutes of stable live playback with audio, and clean sign-out. Repeat using another eligible account sequentially when one is available; account-independent code and synthetic tests do not replace that final verification. No full UI build before the first real login-to-playback success.
 
@@ -76,13 +79,14 @@ Add webOS app metadata and original icons. Declare `requiredACG` according to th
 - Fullscreen video with visible focus, loading state, play/pause where supported, Back, and a return-to-live action only if supported by the stream.
 - Clear distinctions between expired login, unavailable event, provider capacity, network interruption, and unsupported media.
 - Bounded recovery attempts; pause/stop on suspension and revalidate on resume.
-- Sign-out with local session deletion. Remember-me only if protected persistence passed the feasibility review.
+- Stay signed in with protected on-device email/password storage, session refresh where available, and automatic reauthentication otherwise. Invalid saved credentials stop recovery and prompt correction.
+- Sign-out deletes credentials and sessions and cancels pending authentication. Disabling Stay signed in also removes saved credentials.
 
-**Exit criterion:** an ordinary remote-only session can open the app, sign in, switch between verified channels, recover from a connection interruption, and sign out without a laptop.
+**Exit criterion:** an ordinary remote-only session can open the app, sign in, switch between verified channels, recover from a connection interruption, and sign out without a laptop. With Stay signed in enabled, a cold relaunch and an expired session recover access without retyping credentials when NVT permits unattended login. Rejected credentials and interactive challenges produce a clear prompt without a retry loop.
 
 ## Milestone 4 — Reliability and open-source release
 
-Add meaningful tests for provider parsing, redirect validation, session expiry, manifest resolution, account cleanup, and secret redaction using synthetic fixtures. Test focus navigation and lifecycle on the C5. Exercise stream switching, standby/resume, cold launch, expired sessions, and provider failures; check that only one stream runs at a time.
+Add meaningful tests for provider parsing, redirect validation, session expiry, manifest resolution, account cleanup, and secret redaction using synthetic fixtures. Test credential persistence, automatic reauthentication, concurrent expiry handling, changed passwords, disabled persistence, and sign-out during an in-flight login. Test focus navigation and lifecycle on the C5. Exercise stream switching, standby/resume, cold launch, expired sessions, and provider failures; check that only one stream runs at a time.
 
 Choose a license, document support boundaries and privacy behavior, provide installation and contributor instructions, add issue templates discouraging raw captures, and review dependencies and repository history for secrets. Publish source and a reproducible IPK once ready. App-store submission is a separate distribution project with its own provider and LG requirements.
 

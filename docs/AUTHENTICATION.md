@@ -14,14 +14,20 @@ Directional keys and OK must reach every control; the Magic Remote pointer shoul
 
 Submit once, show a signing-in state, and prevent duplicate requests. On invalid credentials, retain the email for correction, clear the password, and focus Password without automatically reopening the keyboard. On a network error, offer an explicit retry without submitting repeatedly. Hand any provider challenges to the viewer. Account creation and password reset stay on the official site.
 
-Offer an unchecked Remember email option for convenience; it stores only the email locally and is independent of session retention. Sign-out removes the session and saved email. Try to retain a valid session across launches only when protected persistence is verified, subject to NVT expiry. Otherwise explain that sign-in will be required again. Never ask users to paste browser cookies into the app.
+The owner requires persistent email and password storage on the TV for automatic authentication recovery. Provide a clearly labeled Stay signed in option, enabled by default, with helper text explaining that it saves login details on this TV. Save the credentials only after a successful login. Viewers who disable it get a session-only login, and disabling it later deletes previously stored credentials. Sign-out removes credentials and session material. Never ask users to paste browser cookies into the app.
+
+On later launches, reuse a valid session first. Renew it through the provider's refresh mechanism if one exists. If the session has expired and cannot be refreshed, use the saved email and password to complete the normal login automatically, then retry the interrupted operation once. Password-based sign-in is automatic reauthentication; it must not be implemented against an assumed refresh-token endpoint. A password change, rejected credentials, or interactive challenge returns control to the viewer.
+
+When saved credentials are rejected, remove the stored password, retain the email only for the correction screen, and require explicit resubmission. Prevent repeated background attempts until the viewer updates their login details. Do not sign in periodically while the app is closed or the TV is in standby: recover authentication on launch, resume, or an active operation that requires it.
 
 ## Session ownership
 
 Prefer the provider's browser-managed session when a supported in-app flow can retain it and feed playback. If a packaged app needs an app-owned cookie jar, place protocol handling in a bundled service after proving that it can authenticate the media player as well.
 
-- Keep credentials transient and discard them immediately after the login attempt; never store the password for automatic retries.
-- Keep sessions in memory for the initial spike. "Remember me" is disabled until a suitable protected persistence mechanism has been verified on the target TV. Do not describe ordinary app files or localStorage as secure credential storage.
+- Store the opted-in email/password and session secrets in an app-scoped credential store on the TV. Prefer a supported OS-backed secret store if accessible to third-party apps. Verify its actual availability and permissions on the C5; no such API has yet been established for this project.
+- If OS-backed storage is unavailable, evaluate encrypted app-private storage with an explicit key-protection design and documented limitations. A hardcoded key or an encryption key stored next to the ciphertext does not provide meaningful protection against extraction. Do not describe ordinary app files, localStorage, or app isolation alone as secure encrypted storage.
+- Prefer a service-owned credential store when the selected architecture permits it. Expose authenticate/restore/delete operations to the UI rather than a method that returns saved passwords. Clear input fields after successful login and keep plaintext copies only as long as required to authenticate. Never put secrets in logs, diagnostics, telemetry, source, or build output.
+- Memory-only storage is acceptable for early disposable protocol probes, but does not fulfill the MVP requirement. Prove persistence, key handling, and automatic reauthentication across a cold restart before declaring login complete. If the platform cannot meet the required protection, record the concrete limitation and revisit the storage design with the owner.
 - Scope cookies by origin, path, expiry, and secure attributes. Validate redirects and do not forward credentials or cookies to unrelated hosts.
 - Use HTTPS with normal certificate validation. Follow only inspected, required provider routes and explicitly approved media destinations.
 - Resolve playback resources when requested. Treat signed URLs as secrets with limited lifetimes, not channel identifiers.
@@ -32,15 +38,18 @@ Prefer the provider's browser-managed session when a supported in-app flow can r
 ```text
 signed out -> authenticating -> signed in -> resolving media -> playing
                     |               |              |              |
-                    +-- failure ----+-- expiry ----+-- expiry ----+
-                                    -> sign-in required
+                    +-- failure -> correction / explicit retry
+                                    expiry -> refreshing session
+                                           -> automatic reauthentication
+                                           -> signed in / retry once
+                                           -> sign-in required on rejection or challenge
 
 signed in / playing -> signing out -> signed out
 ```
 
 Model network errors, unavailable content, and unsupported media separately from invalid credentials. A request returning HTML instead of media may indicate a login redirect; check response type and final destination. Do not infer a valid session merely because a welcome page is cached.
 
-On sign-out, stop playback, cancel requests, invoke the observed provider logout flow where available, and erase all local session material. Clear local state even if remote logout fails, and explain that remote termination could not be confirmed. On app suspension, stop playback and revalidate on resume; do not assume uninterrupted background service execution.
+On sign-out, stop playback, cancel requests, prevent in-flight authentication from restoring a session, invoke the observed provider logout flow where available, and erase saved credentials and all local session material. Clear local state even if remote logout fails, and explain that remote termination could not be confirmed. On app suspension, stop playback and revalidate on resume; do not assume uninterrupted background service execution. Serialize concurrent authentication recovery so multiple failed requests trigger one login attempt. Never automatically reclaim a session from another active device in a retry loop.
 
 ## Open-source boundary
 
