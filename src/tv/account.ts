@@ -71,17 +71,19 @@ export class Account {
     return this.recovery;
   }
 
-  async resolve(id: string): Promise<Playback> {
+  async resolve(id: string, quality?: string, current: () => boolean = () => true): Promise<Playback> {
     const epoch = this.epoch;
     try {
-      if (!(await this.backend.status()).authenticated) throw new AppError('AUTH_REQUIRED');
-      return await this.backend.resolve(id);
+      const status = await this.backend.status();
+      if (!current() || epoch !== this.epoch) throw new AppError('CANCELLED');
+      if (!status.authenticated) throw new AppError('AUTH_REQUIRED');
+      return await this.backend.resolve(id, quality);
     } catch (error) {
       if (publicError(error) !== 'AUTH_REQUIRED') throw error;
-      if (epoch !== this.epoch) throw new AppError('CANCELLED');
+      if (epoch !== this.epoch || !current()) throw new AppError('CANCELLED');
       await this.reauthenticate();
-      if (epoch !== this.epoch) throw new AppError('CANCELLED');
-      return this.backend.resolve(id); // One retry only. Never repeatedly reclaim another device's session.
+      if (epoch !== this.epoch || !current()) throw new AppError('CANCELLED');
+      return this.backend.resolve(id, quality); // One retry only. Never repeatedly reclaim another device's session.
     }
   }
 

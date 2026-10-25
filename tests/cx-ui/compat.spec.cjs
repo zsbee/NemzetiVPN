@@ -68,6 +68,8 @@ test('legacy browser saves login, restores it, plays, returns and signs out', as
   await expect(page.locator('#back-player')).toBeFocused();
   await expect(page.locator('#back-player')).not.toHaveAttribute('tabindex', '-1');
   await page.keyboard.press('Escape');
+  await expect(page.locator('#player-screen')).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.locator('#watch')).toBeFocused();
   await expect(page.locator('video source')).toHaveCount(0);
   await page.getByRole('button', { name: 'Kijelentkezés', exact: true }).click();

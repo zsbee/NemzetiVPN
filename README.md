@@ -33,6 +33,12 @@ Open [the local preview](http://127.0.0.1:4390). Sign in with your own NVT email
 
 The preview and installed app use the same authentication and playback code. The browser uses HLS.js when native HLS is unavailable; the TV prefers its native video engine. Provider content and session cookies are handled by the app-owned service and a temporary loopback media relay.
 
+## Live TV controls
+
+Playback starts with the interface hidden. Left/Right switch to the previous/next channel and wrap around the channel list. Up opens **Műsorújság**; Down or OK reveals the glass toolbar with a back arrow, programme guide, and quality selector. Inside an open interface, arrow keys navigate its controls. Back closes the current interface; with none open, Back returns to the channel list.
+
+The programme guide uses public MédiaKlikk schedules, with current/next information on channel cards and channel/day browsing over continuing video. Dates can be browsed up to 14 days ahead, subject to published availability. Missing schedules do not prevent playback. Times follow Europe/Budapest. Quality defaults to Auto; manual choices reflect the current stream's actual renditions. The live player has no seek bar. Desktop fullscreen is available separately; the TV app already fills the screen.
+
 ## Build and install on the C5
 
 ```sh
@@ -52,6 +58,8 @@ npm run probe:login
 
 Browser tests require Google Chrome and use isolated test profiles with synthetic credentials and generated test media. They never log into a real account. The public login probe inspects only the signed-out form. See [implementation status and limits](docs/IMPLEMENTATION.md) for the exact evidence and remaining TV checks.
 
+Set `NVT_TEST_PORT=4392` when running checks alongside an existing preview to test a fresh server without interrupting it.
+
 ## Project documents
 
 - [Project plan](docs/PROJECT_PLAN.md): scope, architecture choices, milestones, and acceptance criteria.
@@ -59,6 +67,7 @@ Browser tests require Google Chrome and use isolated test profiles with syntheti
 - [Authentication design](docs/AUTHENTICATION.md): per-user login, session lifecycle, and privacy requirements.
 - [Implementation status](docs/IMPLEMENTATION.md): current architecture, storage protections, verification, and remaining work.
 - [TV setup](docs/TV_SETUP.md): Developer Mode, installation, and device checks.
+- [Live TV redesign](docs/PLAYER_REDESIGN_PLAN.md): approved interaction and visual plan, plus implementation evidence.
 
 ## Development and publication
 
@@ -71,6 +80,6 @@ Never commit credentials, cookies, signed playback URLs, or unredacted browser c
 ## Experimental CX / webOS 5.x build
 
 An opt-in CX compatibility build is available with `npm run package:cx`. It uses
-separate compatibility entry points and outputs under `dist/cx`; the default
-webOS 25 build and its source files remain unchanged. CX hardware validation is
+separate compatibility entry points and outputs under `dist/cx`; shared interface
+features use simpler visual effects on the CX. The webOS 25 build remains the default. CX hardware validation is
 still required. See [CX build and testing](docs/CX_SUPPORT.md).

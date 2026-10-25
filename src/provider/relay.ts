@@ -3,6 +3,8 @@ import crypto from 'node:crypto';
 import { AppError, publicError, type Backend, type Credentials, type Playback } from '../shared/types';
 import { NvtProvider } from './nvt';
 import { GATEWAY, allowedUpstream, gatewayUrl, proxied, type Response } from './transport';
+import { ProgrammeGuide } from './guide';
+import { qualityChoices, selectQuality } from './quality';
 
 export function mediaUri(raw: string, base: string): string {
   const match = /^\/prx\/000\/(https?)\/([^/]+)(\/.*)$/.exec(new URL(base).pathname);
@@ -34,14 +36,16 @@ export class MediaRelay {
   private token = '';
   private port = 0;
   private playerOrigin?: string;
+  private master?: { url: string; text: string };
   private stats = { requests: 0, heads: 0, playlists: 0, resources: 0, rejected: 0, failures: 0, lastError: '' };
   diagnostics() { return { ...this.stats, listening: Boolean(this.server?.listening) }; }
   constructor(private fetchMedia: (url: string, signal: AbortSignal) => Promise<Response>, playerOrigin?: string) {
     this.playerOrigin = playerOrigin;
   }
 
-  async start(source: string): Promise<string> {
+  async start(source: string, master?: string): Promise<string> {
     this.stop();
+    this.master = master === undefined ? undefined : { url: source, text: master };
     this.stats = { requests: 0, heads: 0, playlists: 0, resources: 0, rejected: 0, failures: 0, lastError: '' };
     const epoch = this.generation;
     this.token = crypto.randomBytes(24).toString('hex');
@@ -90,7 +94,9 @@ export class MediaRelay {
     const abort = new AbortController(); this.active.add(abort);
     response.on('close', () => abort.abort());
     try {
-      const result = await this.fetchMedia(url, abort.signal);
+      const result = this.master?.url === url
+        ? { url, status: 200, headers: { 'content-type': 'application/vnd.apple.mpegurl' }, body: Buffer.from(this.master.text) }
+        : await this.fetchMedia(url, abort.signal);
       if (epoch !== this.generation || abort.signal.aborted) throw new AppError('CANCELLED');
       const mime = String(result.headers['content-type'] ?? 'application/octet-stream');
       const playlist = new URL(result.url).pathname.includes('.m3u8');
@@ -130,23 +136,45 @@ export class MediaRelay {
     this.active.clear();
     this.server?.close(); this.server = undefined;
     for (const socket of this.connections) socket.destroy();
-    this.connections.clear(); this.resources.clear(); this.token = ''; this.port = 0;
+    this.connections.clear(); this.resources.clear(); this.master = undefined; this.token = ''; this.port = 0;
   }
 }
 
 export class MediaBackend implements Backend {
   private relay: MediaRelay;
+  private generation = 0;
+  private programmes = new ProgrammeGuide();
   constructor(private provider = new NvtProvider(), playerOrigin?: string) {
     this.relay = new MediaRelay((url, signal) => provider.media(url, signal), playerOrigin);
   }
   status() { return this.provider.status(); }
-  login(c: Credentials) { this.relay.stop(); return this.provider.login(c); }
+  login(c: Credentials) { ++this.generation; this.relay.stop(); return this.provider.login(c); }
   channels() { return this.provider.channels(); }
-  async resolve(id: string): Promise<Playback> {
+  guide(date: string) { return this.programmes.day(date); }
+  async resolve(id: string, quality = 'auto'): Promise<Playback> {
+    const epoch = ++this.generation;
     const source = await this.provider.resolve(id);
-    return { url: await this.relay.start(source.url), mime: source.mime };
+    if (epoch !== this.generation) throw new AppError('CANCELLED');
+    let master: string | undefined;
+    let qualities: import('../shared/types').Quality[] = [];
+    let selected = 'auto';
+    try {
+      const result = await this.provider.media(source.url);
+      const text = result.body.toString();
+      qualities = qualityChoices(text);
+      if (qualities.some(item => item.id === quality)) { selected = quality; master = selectQuality(text, quality); }
+      // Preserve the final URL after redirects as the base for relative media references.
+      source.url = result.url;
+    } catch (error) {
+      if (publicError(error) === 'AUTH_REQUIRED') throw error;
+      // Discovery is optional; keep automatic playback if metadata cannot be read.
+    }
+    if (epoch !== this.generation) throw new AppError('CANCELLED');
+    const url = await this.relay.start(source.url, master);
+    if (epoch !== this.generation) throw new AppError('CANCELLED');
+    return { url, mime: source.mime, qualities, quality: selected };
   }
-  logout() { this.relay.stop(); return this.provider.logout(); }
-  async stop(): Promise<void> { this.relay.stop(); }
+  logout() { ++this.generation; this.relay.stop(); return this.provider.logout(); }
+  async stop(): Promise<void> { ++this.generation; this.relay.stop(); }
   async diagnostics(): Promise<object> { return { relay: this.relay.diagnostics(), ...await this.provider.diagnostics() }; }
 }

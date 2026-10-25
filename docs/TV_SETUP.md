@@ -43,7 +43,7 @@ The installed app runs on the television. The computer preview server is not nee
 - Sign in with Stay signed in enabled. Verify the app reports the login was saved; a storage warning means persistence has not passed.
 - Fully close and reopen the app, then restart the TV and reopen it. Both should restore access without retyping the password when NVT permits unattended login.
 - Start M4, test another main channel, and test an active event feed when available. Confirm audio, fullscreen video, at least 30 minutes of stability, and one active stream.
-- Use Back from playback and verify focus returns to the selected channel. Check directional navigation and the Magic Remote pointer through the full channel grid.
+- On the live TV redesign, use Left/Right with controls hidden to switch channels, Up to open Műsorújság, and Down/OK to reveal controls. Back dismisses the current interface; with controls hidden, it returns focus to the selected channel. Check directional navigation and the Magic Remote pointer through the full channel grid.
 - Test standby/resume and a temporary network interruption. A rejected password or interactive provider challenge should prompt the viewer instead of repeatedly submitting saved credentials.
 - Sign out, fully relaunch, and confirm that no saved login is restored. Test the separate saved-login deletion action too.
 

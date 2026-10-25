@@ -5,7 +5,9 @@ import { DeviceVault } from './vault';
 import { installFocusNavigation } from './focus';
 import { hu, errors } from './strings';
 import { TvPlayer } from './player';
-import { PlaybackControls } from './controls';
+import { GuideStore } from './guide';
+import { LiveUI } from './live-ui';
+import { nowNext, programmeTime } from '../shared/programmes';
 
 const backend = new AppBackend();
 const account = new Account(backend, new DeviceVault());
@@ -20,6 +22,7 @@ let channels: Channel[] = CHANNELS;
 const PROGRAMME_REFRESH_MS = 60_000;
 let programmeTimer: ReturnType<typeof setTimeout> | undefined;
 let catalogueRequest = 0;
+let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
 for (const element of document.querySelectorAll<HTMLElement>('[data-text]')) {
   element.textContent = hu[element.dataset.text as keyof typeof hu];
@@ -29,7 +32,17 @@ const password = $<HTMLInputElement>('password');
 const remember = $<HTMLInputElement>('remember');
 const video = $<HTMLVideoElement>('video');
 const player = new TvPlayer(video, () => { void playbackFailed(); });
-const controls = new PlaybackControls($('player-overlay'), video, () => screen === 'player');
+const guide = new GuideStore(backend);
+const live = new LiveUI(video, guide, () => screen === 'player', () => channels, () => selectedChannel, id => {
+  const next = channels.find(channel => channel.id === id);
+  if (next) { selectedChannel = next; void play(); }
+}, () => { void play(true, true); });
+guide.subscribe(() => { if (screen === 'channels') renderChannels(); });
+const metadataTimer = setInterval(() => {
+  if (screen === 'login' || document.hidden) return;
+  guide.refresh(); live.renderNow();
+  if (screen === 'channels') renderChannels();
+}, 60_000);
 
 function announce(message = '', error = false): void {
   const target = screen === 'login' ? $('login-message') : $('app-message');
@@ -39,6 +52,8 @@ function announce(message = '', error = false): void {
 function show(next: typeof screen): void {
   clearTimeout(programmeTimer);
   ++catalogueRequest;
+  if (next !== 'player') live.reset();
+  if (next !== 'player') { clearTimeout(noticeTimer); $('player-notice').textContent = ''; }
   screen = next;
   $('login-screen').hidden = next !== 'login';
   $('channels-screen').hidden = next !== 'channels';
@@ -64,6 +79,7 @@ function updateAccount(): void {
 function showChannels(refresh = false): void {
   show('channels'); updateAccount();
   renderChannels();
+  guide.refresh();
   announce(account.storageWarning ? hu.storageWarning : '');
   if (refresh) void refreshProgrammes();
   else scheduleProgrammeRefresh();
@@ -92,7 +108,9 @@ function renderChannels(): void {
       const bottom = document.createElement('span'); bottom.className = 'channel-bottom';
       const description = document.createElement('span'); description.className = 'programme';
       const watch = document.createElement('span'); watch.className = 'watch-label'; watch.textContent = hu.watch;
-      bottom.append(description, watch); button.append(live, identity, bottom);
+      const next = document.createElement('span'); next.className = 'next-programme';
+      const programmes = document.createElement('span'); programmes.className = 'card-programmes'; programmes.append(description, next);
+      bottom.append(programmes, watch); button.append(live, identity, bottom);
       const channelId = channel.id;
       button.addEventListener('click', () => {
         selectedChannel = channels.find(item => item.id === channelId)!; void play();
@@ -100,7 +118,9 @@ function renderChannels(): void {
     }
     button.setAttribute('aria-label', channel.id === 'm4' ? hu.watch : `${channel.name} élő adás`);
     button.querySelector('.channel-name')!.textContent = channel.name;
-    button.querySelector('.programme')!.textContent = channel.description;
+    const { current, next } = nowNext(guide.programmes, channel.id);
+    button.querySelector('.programme')!.textContent = current ? `Most · ${current.title}` : channel.description;
+    button.querySelector('.next-programme')!.textContent = next ? `${programmeTime(next.start)} · ${next.title}` : '';
     // Existing tiles stay in place so refreshes preserve focus, hover, and scroll.
     if (grid.children[channels.indexOf(channel)] !== button) grid.insertBefore(button, grid.children[channels.indexOf(channel)] ?? null);
   }
@@ -133,6 +153,12 @@ function stopPlayback(stopService = false): void {
   if (stopService) void backend.stop().catch(() => {});
 }
 function errorText(error: unknown): string { return errors[publicError(error)] ?? errors.NETWORK; }
+function qualityFallback(): void {
+  live.useAuto();
+  clearTimeout(noticeTimer);
+  $('player-notice').textContent = hu.qualityFallback;
+  noticeTimer = setTimeout(() => { $('player-notice').textContent = ''; }, 6000);
+}
 
 $('login-form').addEventListener('submit', async event => {
   event.preventDefault();
@@ -166,22 +192,28 @@ password.addEventListener('keydown', event => {
   if (event.key === 'Enter') { event.preventDefault(); password.blur(); $('sign-in').focus(); }
 });
 
-async function play(resetRecovery = true): Promise<void> {
+async function play(resetRecovery = true, changingQuality = false): Promise<void> {
   if (resetRecovery) mediaRecoveryAttempted = false;
   const epoch = ++viewEpoch;
   stopPlayback();
-  show('player'); $('player-title').textContent = selectedChannel.name;
-  controls.show();
+  show('player'); live.channelChanged();
+  guide.refresh();
   $('player-status').textContent = hu.loading;
   $('retry-playback').hidden = true;
-  $('back-player').focus();
+  video.focus({ preventScroll: true });
   try {
-    const playback = await account.resolve(selectedChannel.id);
+    const playback = await account.resolve(selectedChannel.id, live.quality, () => epoch === viewEpoch);
     if (epoch !== viewEpoch) return;
+    live.setPlayback(playback);
     await player.start(playback.url, playback.mime);
+    if (epoch === viewEpoch && changingQuality) $('player-notice').textContent = '';
   } catch (error) {
     if (epoch !== viewEpoch) return;
     const code = publicError(error);
+    if (changingQuality && live.quality !== 'auto' && !['AUTH_REQUIRED', 'INVALID_CREDENTIALS', 'CHALLENGE_REQUIRED'].includes(code)) {
+      qualityFallback();
+      await play(false); return;
+    }
     if (code === 'PLAYBACK') { await playbackFailed(); return; }
     if (['AUTH_REQUIRED', 'INVALID_CREDENTIALS', 'CHALLENGE_REQUIRED'].includes(code)) {
       stopPlayback(); show('login'); email.value = account.email;
@@ -196,8 +228,12 @@ $('retry-playback').addEventListener('click', () => { void play(); });
 $('back-player').addEventListener('click', () => { ++viewEpoch; stopPlayback(true); showChannels(true); });
 video.addEventListener('playing', () => { $('player-status').textContent = ''; });
 async function playbackFailed(): Promise<void> {
-  if (screen !== 'player' || player.mode === 'stopped') return;
+  if (screen !== 'player') return;
   const epoch = viewEpoch;
+  if (live.quality !== 'auto') {
+    qualityFallback();
+    await play(false); return;
+  }
   if (!mediaRecoveryAttempted) {
     mediaRecoveryAttempted = true;
     try {
@@ -230,9 +266,9 @@ window.addEventListener('keyboardStateChange', event => {
 });
 installFocusNavigation(() => keyboard, () => {
   if (!onTV() && document.activeElement?.matches('input')) { (document.activeElement as HTMLElement).blur(); $('sign-in').focus(); return; }
-  if (screen === 'player') { ++viewEpoch; stopPlayback(true); showChannels(true); }
+  if (screen === 'player') { if (live.back()) return; ++viewEpoch; stopPlayback(true); showChannels(true); }
   else if (onTV()) window.PalmSystem?.platformBack();
-});
+}, () => live.navigationRoot);
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     clearTimeout(programmeTimer);
@@ -242,7 +278,7 @@ document.addEventListener('visibilitychange', () => {
     backend.release();
   } else if (screen === 'channels') void refreshProgrammes();
 });
-window.addEventListener('pagehide', () => { clearTimeout(programmeTimer); ++catalogueRequest; stopPlayback(); backend.release(); });
+window.addEventListener('pagehide', () => { clearInterval(metadataTimer); clearTimeout(programmeTimer); ++catalogueRequest; stopPlayback(); backend.release(); });
 
 async function init(): Promise<void> {
   setBusy(true); announce(hu.restoring);

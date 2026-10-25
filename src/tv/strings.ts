@@ -10,6 +10,7 @@ export const hu = {
   channels: 'Élő adás', watch: 'Nézem', back: 'Vissza a csatornákhoz',
   logout: 'Kijelentkezés', forget: 'Mentett belépés törlése', retry: 'Újrapróbálás',
   loading: 'Adás betöltése…', saved: 'Belépés mentve ezen a tévén',
+  qualityFallback: 'A kiválasztott minőség nem érhető el. Visszaállítás Auto módra.',
   sessionOnly: 'A belépés nincs mentve', playFailed: 'Az adás nem indult el. Próbáld újra.',
   storageWarning: 'A belépési adatok mentése nem sikerült. A következő indításkor újra be kell jelentkezned.',
   footer: 'Független alkalmazás · Meglévő NVT-fiók szükséges',

@@ -1,4 +1,4 @@
-import { AppError, SERVICE_ID, type Backend, type Channel, type Credentials, type ErrorCode, type Playback, type Status } from '../shared/types';
+import { AppError, SERVICE_ID, type Backend, type Channel, type Credentials, type ErrorCode, type Playback, type Status, type GuideDay } from '../shared/types';
 
 interface Bridge { onservicecallback: (response: string) => void; call(uri: string, args: string): void; cancel(): void }
 declare global { interface Window { PalmServiceBridge?: new () => Bridge; PalmSystem?: { platformBack(): void } } }
@@ -42,7 +42,8 @@ export class AppBackend implements Backend {
   status() { return this.request<Status>('status'); }
   login(c: Credentials) { return this.request<Status>('login', c); }
   channels() { return this.request<Channel[]>('channels'); }
-  resolve(id: string) { return this.request<Playback>('resolve', { id }); }
+  resolve(id: string, quality = 'auto') { return this.request<Playback>('resolve', { id, quality }); }
+  guide(date: string) { return this.request<GuideDay>('guide', { date }); }
   async stop() { await this.request('stop'); }
   logout() { return this.request<{ remoteConfirmed: boolean }>('logout'); }
 }

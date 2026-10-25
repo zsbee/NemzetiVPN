@@ -8,12 +8,16 @@ export class AppError extends Error {
 export interface Credentials { email: string; password: string }
 export interface Channel { id: string; name: string; description: string }
 export interface Status { authenticated: boolean }
-export interface Playback { url: string; mime: string }
+export interface Quality { id: string; label: string }
+export interface Playback { url: string; mime: string; qualities?: Quality[]; quality?: string }
+export interface Programme { channel: string; title: string; subtitle?: string; description?: string; start: number; end: number }
+export interface GuideDay { date: string; programmes: Programme[]; updatedAt: number; stale?: boolean }
 export interface Backend {
   status(): Promise<Status>;
   login(credentials: Credentials): Promise<Status>;
   channels(): Promise<Channel[]>;
-  resolve(id: string): Promise<Playback>;
+  resolve(id: string, quality?: string): Promise<Playback>;
+  guide?(date: string): Promise<GuideDay>;
   stop?(): Promise<void>;
   diagnostics?(): Promise<object>;
   logout(): Promise<{ remoteConfirmed: boolean }>;
