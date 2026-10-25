@@ -14,7 +14,12 @@
     "test:ui": "playwright test",
     "package:tv": "npm run build && ares-package dist/tv dist/service -o dist/packages",
     "check": "npm run typecheck && npm test && npm run test:ui",
-    "probe:login": "npm run build && node dist/tools/probe.cjs"
+    "probe:login": "npm run build && node dist/tools/probe.cjs",
+    "build:cx": "node scripts/build-cx.mjs",
+    "dev:cx": "npm run build:cx && node dist/cx/dev/server.cjs",
+    "package:cx": "npm run build:cx && ares-package dist/cx/tv dist/cx/service -o dist/cx/packages",
+    "test:cx": "npm run build:cx && node --test tests/cx/*.test.cjs",
+    "test:ui:cx": "npm run build:cx && playwright test --config playwright.cx.config.cjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

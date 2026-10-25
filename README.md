@@ -67,3 +67,10 @@ The implementation uses TypeScript, a small DOM-based interface, and a bundled w
 Local Git uses the `main` branch. No remote or public repository has been configured. Open-source publication is planned; choose a license before public release. The project is not affiliated with NVT, MTVA, or LG. The app will require an existing eligible account; registration remains with NVT.
 
 Never commit credentials, cookies, signed playback URLs, or unredacted browser captures. Keep private investigation files in the ignored `research-private/` directory. Ignore rules are a convenience, not a substitute for reviewing staged files.
+
+## Experimental CX / webOS 5.x build
+
+An opt-in CX compatibility build is available with `npm run package:cx`. It uses
+separate compatibility entry points and outputs under `dist/cx`; the default
+webOS 25 build and its source files remain unchanged. CX hardware validation is
+still required. See [CX build and testing](docs/CX_SUPPORT.md).
