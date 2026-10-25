@@ -1,0 +1,17 @@
+/* CX-only overrides for Chromium 68. The normal C5 stylesheet is unchanged. */
+:root { font-size:1.45vw; }
+h1 { font-size:4.6vw; }
+body::before { top:0; right:0; bottom:0; left:0; background:linear-gradient(105deg,#0b1315ed 5%,#0b131580 100%),linear-gradient(180deg,#a52d3b 0%,#a52d3b 33.333%,#e9e5d9 33.333%,#e9e5d9 66.666%,#30684b 66.666%,#30684b 100%); }
+button:focus,input:focus,a:focus { outline:4px solid var(--accent); outline-offset:5px; }
+.channel-card:focus { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 16px 36px #0005; }
+/* Grid gap is supported; flex gap arrived after Chromium 68. */
+.brand,.channel-pills,.live-dot,.fields,.remember,.channel-card,.channel-identity,.channel-bottom,.account { gap:0; }
+.brand>*+* { margin-left:.5rem; }
+.channel-pills>*+* { margin-left:1rem; }
+.live-dot::before { margin-right:.4rem; }
+.fields>*+* { margin-top:.3rem; }
+.remember>*+* { margin-left:.45rem; }
+.channel-card>*+* { margin-top:1.2rem; }
+.channel-identity>*+* { margin-top:.5rem; }
+.channel-bottom>*+* { margin-left:.7rem; }
+.account>*+* { margin-left:2rem; }
