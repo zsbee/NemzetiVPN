@@ -36,8 +36,8 @@ Prefer the provider's browser-managed session when a supported in-app flow can r
 ## State and behavior
 
 ```text
-signed out -> authenticating -> signed in -> resolving media -> playing
-                    |               |              |              |
+ github
+ |               |              |              |
                     +-- failure -> correction / explicit retry
                                     expiry -> refreshing session
                                            -> automatic reauthentication
