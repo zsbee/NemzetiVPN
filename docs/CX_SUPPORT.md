@@ -1,8 +1,9 @@
 # Experimental webOS 5.x / LG OLED CX build
 
-Work lives on `support/cx`. The original webOS 25 build remains the default:
-`npm run build`, `npm run package:tv`, and the existing TV/provider/service sources
-are unchanged. CX compatibility uses separate entry points and files in `src/cx`.
+The webOS 25 build remains the default with `npm run build` and `npm run package:tv`.
+CX compatibility uses separate entry points and files in `src/cx`. The live TV redesign
+on `codex/live-tv-redesign` shares the guide, quality selection, and remote shortcuts
+between both builds, with opaque glass surfaces and simpler visual effects on CX.
 
 ## Build and install
 
@@ -89,6 +90,9 @@ On a CX (including firmware 04.64.00), verify:
 4. Native playback of M4/M1 and other channels; watch for at least 30 minutes.
 5. Remote focus, virtual keyboard, wheel, overlay hiding/OK, Back and sign-out.
 6. Network interruption, channel changes, suspension, and session recovery.
+7. Hidden-interface Left/Right switching, Up guide, Down controls, nested Back,
+   programme browsing and wheel scrolling, manual quality selection with audio,
+   Auto recovery, and legibility of the opaque glass fallback over bright video.
 
 C1 may also benefit from these fallbacks, but it has not been device-tested.
 

@@ -31,7 +31,13 @@ The initial relay removed filename extensions, while the native player was given
 
 M1's page redirected through the gateway to `hirado.hu`, which the initial destination allowlist omitted. The fix allows that specific provider hostname and passes the final page URL to the player bootstrap. M1 then reached native playback on the C5 without an authentication error. The allowlist remains closed to unrelated destinations.
 
-Playback chrome fades out after three seconds of inactivity and returns on pointer movement or remote OK. Hidden controls are inert and removed from accessibility navigation; remote Back continues to return to the selected channel. Safe service diagnostics expose only request counts, failure categories, resolution stage, channel ID, and a sanitized provider hostname—never credentials or signed URLs.
+On `codex/live-tv-redesign`, playback starts with app-owned controls hidden. Left/Right switch channels, Up opens the programme guide, and Down/OK opens the bottom-left glass toolbar. Controls hide after five seconds without interaction, remain visible during hover, and stay pinned while a panel is open. Back dismisses open interfaces before returning to the selected channel. Hidden controls are inert. Native browser controls, including the timeline and TV fullscreen button, are removed. C5 glass blur is optional; CX uses opaque fallback surfaces.
+
+`src/provider/guide.ts` fetches only the fixed public MédiaKlikk daily-guide endpoint, parses plain programme data with explicit timestamp offsets, deduplicates concurrent requests, and caches at most ten days. The service exposes a validated `guide` method. The frontend prefetches today, tomorrow, and yesterday for overnight coverage, refreshes relevant data every five minutes, and preserves focus during updates. Days without schedules and temporary event feeds receive an empty-state message. Public feed checks returned 365 entries for 25 October and 335 entries for 26 October; tomorrow's response contained no M4 Sport + rows. No signed-in account was used for these checks.
+
+Quality options are read from the current HLS master. Auto retains adaptive playback; manual selection filters stream variants while preserving audio groups and key references, then uses the same relay for native and hls.js playback. Unavailable choices revert to Auto. Manual startup/playback failures get one Auto fallback with a short notice. Stale resolutions and delayed session checks cannot replace a later channel selection. New controls and native quality switching still require physical C5/CX testing.
+
+Safe service diagnostics expose only request counts, failure categories, resolution stage, channel ID, and a sanitized provider hostname—never credentials or signed URLs.
 
 ## Credential storage and trust boundary
 

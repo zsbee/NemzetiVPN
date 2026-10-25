@@ -96,3 +96,14 @@ test('a storage failure is reported instead of claiming the password was saved',
   assert.equal(account.remembered, false);
   assert.equal(account.storageWarning, true);
 });
+
+test('a superseded channel selection cannot resolve after its delayed session check', async () => {
+  let finish, resolved = false;
+  const backend = { status: () => new Promise(resolve => { finish = resolve; }), resolve: async () => { resolved = true; } };
+  const account = new Account(backend, {});
+  let current = true;
+  const pending = account.resolve('m4', 'auto', () => current);
+  current = false; finish({ authenticated: true });
+  await assert.rejects(pending, { code: 'CANCELLED' });
+  assert.equal(resolved, false);
+});

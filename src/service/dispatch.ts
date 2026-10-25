@@ -7,10 +7,16 @@ export async function dispatch(provider: Backend, method: string, payload: unkno
       case 'status': data = await provider.status(); break;
       case 'login': data = await provider.login(validateCredentials(payload)); break;
       case 'channels': data = await provider.channels(); break;
+      case 'guide': {
+        const date = (payload as { date?: unknown })?.date;
+        if (typeof date !== 'string' || !provider.guide) throw new AppError('INVALID_REQUEST');
+        data = await provider.guide(date); break;
+      }
       case 'resolve': {
         const id = (payload as { id?: unknown })?.id;
-        if (typeof id !== 'string') throw new AppError('INVALID_REQUEST');
-        data = await provider.resolve(id); break;
+        const quality = (payload as { quality?: unknown })?.quality;
+        if (typeof id !== 'string' || (quality !== undefined && (typeof quality !== 'string' || !/^(auto|[a-f0-9]{16})$/.test(quality)))) throw new AppError('INVALID_REQUEST');
+        data = await provider.resolve(id, quality as string | undefined); break;
       }
       case 'logout': data = await provider.logout(); break;
       case 'stop': await provider.stop?.(); data = {}; break;

@@ -11,6 +11,8 @@ global.URLSearchParams = undefined;
 global.AbortController = undefined;
 String.prototype.matchAll = undefined;
 String.prototype.trimStart = undefined;
+Array.prototype.flatMap = undefined;
+Promise.prototype.finally = undefined;
 const backend = require('../../../dist/cx/test/backend.cjs');
 const base = 'https://nvpn.nvt.gov.hu/prx/000/https/m4sport.hu/master.m3u8';
 // Node 8 http.get also takes one options object.
@@ -24,6 +26,13 @@ function localGet(url, headers) {
   });
 }
 async function main() {
+  const guideHtml = '<div data-channelid="30"><div class="channel_body"><li data-from="2026-10-25 02:30:00+0200" data-till="2026-10-25 02:30:00+0100"><h1>Sport</h1></li></div></div>';
+  const guide = new backend.ProgrammeGuide(async () => guideHtml);
+  assert.strictEqual((await guide.day(backend.guideDate())).programmes[0].end - backend.parseGuide(guideHtml)[0].start, 3600000);
+  const master = '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1000000,RESOLUTION=1280x720\n720.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1920x1080\n1080.m3u8';
+  const qualities = backend.qualityChoices(master);
+  assert.strictEqual(qualities.length, 2);
+  assert(!backend.selectQuality(master, qualities[0].id).includes('1080.m3u8'));
   assert.strictEqual(backend.parseChannels('{"streams":[]}').length, 7);
   assert(backend.playerRequest('loadPlayer("id", {"streamId":"mtv4live"})').includes('video=mtv4live'));
   assert.strictEqual(backend.rewritePlaylist(' \n#EXTM3U\nseg.ts', () => 'local'), ' \n#EXTM3U\nlocal');

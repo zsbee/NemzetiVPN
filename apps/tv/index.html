@@ -10,6 +10,13 @@
   <script defer src="app.js"></script>
 </head>
 <body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m12 5-7 7 7 7M5 12h14"/></symbol>
+    <symbol id="i-guide" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M7 2v4m10-4v4M3 10h18M7 14h3m4 0h3M7 17h3"/></symbol>
+    <symbol id="i-quality" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  </defs></svg>
   <main>
     <section id="login-screen" class="login-layout" aria-label="Bejelentkezés">
       <div class="welcome">
@@ -47,8 +54,37 @@
       <div class="account"><div><p id="account-email"></p><p id="account-saved" class="muted"></p></div><button id="forget" class="text-button" data-text="forget"></button></div>
     </section>
     <section id="player-screen" hidden aria-label="Lejátszó">
-      <video id="video" controls playsinline tabindex="0"></video>
-      <div id="player-overlay" class="player-overlay"><div><span class="live-dot">ÉLŐ</span><h2 id="player-title"></h2></div><button id="back-player" class="secondary" data-text="back"></button></div>
+      <video id="video" playsinline tabindex="0" aria-label="Élő televízióadás"></video>
+      <div id="player-overlay" class="player-overlay chrome-hidden" inert aria-hidden="true">
+        <div class="now-playing"><div class="player-identity"><span class="live-dot">ÉLŐ</span><h2 id="player-title"></h2></div><p id="player-programme"></p><p id="player-next"></p></div>
+        <nav class="player-toolbar glass" aria-label="Lejátszó vezérlők">
+          <button id="back-player" class="icon-button back-action" aria-label="Vissza a csatornákhoz"><svg class="icon"><use href="#i-back"/></svg><span class="focus-label">Vissza</span></button>
+          <button id="open-guide" class="toolbar-button" aria-expanded="false" aria-controls="guide-panel"><svg class="icon"><use href="#i-guide"/></svg><span>Műsorújság</span></button>
+          <button id="open-quality" class="toolbar-button" aria-expanded="false" aria-controls="quality-panel"><svg class="icon"><use href="#i-quality"/></svg><span id="quality-label">Minőség · Auto</span></button>
+          <button id="desktop-fullscreen" class="icon-button" aria-label="Teljes képernyő" hidden><svg class="icon"><use href="#i-expand"/></svg></button>
+        </nav>
+        <p class="player-remote-hint">↑ Műsorújság · ↓ Vezérlők · ← → Csatornaváltás, ha a vezérlők rejtve vannak</p>
+      </div>
+      <aside id="guide-panel" class="floating-panel glass" role="dialog" aria-modal="true" aria-labelledby="guide-heading" hidden>
+        <header class="panel-header"><div><p class="eyebrow">FEDEZD FEL</p><h2 id="guide-heading">Műsorújság</h2></div><button id="close-guide" class="icon-button" aria-label="Műsorújság bezárása"><svg class="icon"><use href="#i-close"/></svg></button></header>
+        <div id="guide-content" class="guide-content">
+          <div class="guide-selector"><button id="guide-channel-prev" class="icon-button" aria-label="Előző csatorna a műsorújságban">‹</button><strong id="guide-channel"></strong><button id="guide-channel-next" class="icon-button" aria-label="Következő csatorna a műsorújságban">›</button></div>
+          <div class="guide-selector date-selector"><button id="guide-day-prev" class="icon-button" aria-label="Előző nap">‹</button><span id="guide-date"></span><button id="guide-day-next" class="icon-button" aria-label="Következő nap">›</button></div>
+          <p id="guide-message" class="panel-message" role="status"></p>
+          <div id="guide-list" class="guide-list" data-scroll></div>
+        </div>
+        <section id="programme-detail" class="programme-detail" hidden>
+          <button id="detail-back" class="text-button">← Vissza a műsorokhoz</button>
+          <p id="detail-time" class="detail-time"></p><h3 id="detail-title"></h3><p id="detail-subtitle" class="detail-subtitle"></p>
+          <div class="detail-scroll" data-scroll tabindex="0" role="region" aria-label="Műsorleírás"><p id="detail-description"></p></div>
+          <button id="guide-watch" class="primary" hidden>Csatorna nézése</button>
+        </section>
+      </aside>
+      <aside id="quality-panel" class="quality-panel glass" role="dialog" aria-modal="true" aria-labelledby="quality-heading" hidden>
+        <header class="panel-header"><h2 id="quality-heading">Minőség</h2><button id="close-quality" class="icon-button" aria-label="Minőségmenü bezárása"><svg class="icon"><use href="#i-close"/></svg></button></header>
+        <p id="quality-message" class="panel-message"></p><div id="quality-list" data-scroll></div>
+      </aside>
+      <p id="player-notice" class="player-notice" role="status"></p>
       <div class="player-state"><p id="player-status" role="status" aria-live="polite"></p><button id="retry-playback" class="primary" hidden data-text="retry"></button></div>
     </section>
   </main>

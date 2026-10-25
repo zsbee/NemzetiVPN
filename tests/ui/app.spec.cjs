@@ -124,7 +124,7 @@ test(`playing a channel stops and restores its tile using Back: ${back}`, async 
     stops++;
     return route.fulfill({ json: { returnValue: true, data: {} } });
   });
-  await page.route('**/api/resolve', route => route.fulfill({ json: { returnValue: true, data: { url: 'http://127.0.0.1:4390/synthetic-hls/index.m3u8', mime: 'application/vnd.apple.mpegurl' } } }));
+  await page.route('**/api/resolve', route => route.fulfill({ json: { returnValue: true, data: { url: new URL('/synthetic-hls/index.m3u8', route.request().url()).href, mime: 'application/vnd.apple.mpegurl' } } }));
   await page.route('**/synthetic-hls/**', async route => {
     const name = new URL(route.request().url()).pathname.split('/').at(-1);
     if (!/^(index\.m3u8|segment[0-2]\.ts)$/.test(name)) return route.fulfill({ status: 404 });
@@ -135,9 +135,10 @@ test(`playing a channel stops and restores its tile using Back: ${back}`, async 
   await page.locator('#watch-m1').click();
   await expect.poll(() => page.locator('video').evaluate(v => v.currentTime)).toBeGreaterThan(0);
   if (back === 'on-screen') {
+    await page.keyboard.press('ArrowDown');
     await page.getByRole('button', { name: 'Vissza a csatornákhoz', exact: true }).click();
   } else {
-    if (back === 'remote with hidden controls') await expect(page.locator('#player-overlay')).toHaveAttribute('inert', '', { timeout: 5000 });
+    if (back === 'remote with hidden controls') await expect(page.locator('#player-overlay')).toHaveAttribute('inert', '', { timeout: 6500 });
     await page.evaluate(() => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 461, bubbles: true, cancelable: true })));
   }
   await expect(page.locator('#watch-m1')).toBeFocused();
@@ -183,20 +184,28 @@ test('a native player that never starts falls back and exits loading within a bo
   });
   expect(result).toEqual({ code: 'PLAYBACK', fallback: true, bounded: true });
 });
-test('playback overlay hides when idle and returns with cursor movement or remote OK', async ({ page }) => {
+test('playback starts unobstructed and controls return with cursor movement, Down or OK', async ({ page }) => {
   await mockProvider(page);
+  await page.clock.install();
   await page.goto('/'); await login(page);
   await page.getByRole('button', { name: 'Nézem' }).click();
   const overlay = page.locator('#player-overlay');
-  await expect(overlay).toHaveClass(/chrome-hidden/, { timeout: 5000 });
+  await expect(overlay).toHaveClass(/chrome-hidden/);
   await expect(overlay).toHaveAttribute('inert', '');
   await page.mouse.move(200, 100);
   await expect(overlay).not.toHaveClass(/chrome-hidden/);
-  await expect(overlay).toHaveClass(/chrome-hidden/, { timeout: 5000 });
+  await page.clock.fastForward(5100);
+  await expect(overlay).toHaveClass(/chrome-hidden/);
   await page.keyboard.press('Enter');
-  await expect(overlay).not.toHaveClass(/chrome-hidden/);
-  await expect(page.getByRole('button', { name: 'Vissza a csatornákhoz', exact: true })).toBeFocused();
-  await expect(overlay).toHaveClass(/chrome-hidden/, { timeout: 5000 });
+  await expect(page.locator('#back-player')).toBeFocused();
+  await expect(page.locator('#player-screen')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(overlay).toHaveClass(/chrome-hidden/);
+  await expect(page.locator('#player-screen')).toBeVisible();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('#back-player')).toBeFocused();
+  await page.clock.fastForward(5100);
+  await expect(overlay).toHaveClass(/chrome-hidden/);
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Nézem' })).toBeFocused();
 });

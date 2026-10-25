@@ -20,7 +20,7 @@ service.register('lease', message => {
   leases.delete(message.uniqueToken);
   if (!leases.size) void provider.logout();
 });
-for (const method of ['status', 'login', 'channels', 'resolve', 'logout', 'stop', 'diagnostics']) {
+for (const method of ['status', 'login', 'channels', 'guide', 'resolve', 'logout', 'stop', 'diagnostics']) {
   service.register(method, message => {
     if (!allowed(message)) { message.respond({ returnValue: false, code: 'INVALID_REQUEST' }); return; }
     void dispatch(provider, method, message.payload).then(result => message.respond(result));
