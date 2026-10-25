@@ -6,6 +6,27 @@ A planned, independent LG TV app for watching live media available through Nemze
 
 Initial hardware target: **LG OLED C5**. Start with webOS 25 compatibility and confirm the TV's installed version before implementation. Older televisions are outside the first release target.
 
+## A look inside
+
+Glass channel cards sit over a background that follows the selected channel's colour. Move focus with the remote to go from **Petőfi green** to **M4 Sport red**.
+
+| M2 / Petőfi TV · green ambience | M4 Sport · red ambience |
+| --- | --- |
+| [![Channel browser with M2 / Petőfi TV focused and a green background](docs/screenshots/channels-green.png)](docs/screenshots/channels-green.png) | [![Channel browser with M4 Sport focused and a red background](docs/screenshots/channels-red.png)](docs/screenshots/channels-red.png) |
+
+Press **Up** during playback to open **Műsorújság**. Browse channels and days, see what's on now, and open a programme for its description.
+
+[![Programme guide with channel and day navigation, broadcast times, and the current programme highlighted](docs/screenshots/programme-guide.png)](docs/screenshots/programme-guide.png)
+
+<details>
+<summary>Explore the programme detail view</summary>
+
+[![Programme detail viewer showing its title, broadcast time, subtitle, and description](docs/screenshots/programme-details.png)](docs/screenshots/programme-details.png)
+
+</details>
+
+<sub>1920 × 1080 captures from the browser preview with sample programme data. The playback picture is intentionally empty. Click any image for full size.</sub>
+
 ## Intended experience
 
 1. Open the app and enter your own NVT email and password using the TV's built-in virtual keyboard.
@@ -16,7 +37,7 @@ Initial hardware target: **LG OLED C5**. Start with webOS 25 compatibility and c
 
 The channel list includes M1, M2 / Petőfi TV, M4 Sport, M4 Sport +, M5, Duna, and Duna World. Active M4 event feeds are discovered from the provider's current catalogue. Channels may be off air or require additional playback support; their presence is not a claim that every broadcast has been tested. On-demand browsing is a later possibility. QR/phone pairing is outside the MVP; login is designed to work on the TV without an additional server.
 
-The browsing screens use stretched Hungarian tricolour backgrounds and locally bundled broadcaster logos. Tiles and buttons respond to pointer hover, with visible remote focus and reduced-motion support. The remote wheel scrolls the page, including small wheel steps. Programme titles refresh every 60 seconds while the channel list is visible, and immediately on return from playback or app suspension; existing tiles retain focus and scroll position. These interactions are covered by browser tests; the updated wheel handling still needs confirmation on the C5.
+The channel browser uses a background tinted to the focused or hovered channel, glass cards, and locally bundled broadcaster logos. Tiles and buttons respond to pointer hover, with visible remote focus and reduced-motion support. The remote wheel scrolls the page, including small wheel steps. Programme titles refresh every 60 seconds while the channel list is visible, and immediately on return from playback or app suspension; existing tiles retain focus and scroll position. These interactions are covered by browser tests; the updated wheel handling still needs confirmation on the C5.
 
 Logo source URLs are recorded in [the asset notes](apps/tv/assets/logos/SOURCES.md).
 
