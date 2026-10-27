@@ -7,6 +7,7 @@ A planned, independent LG TV app for watching live media available through Nemze
 Initial hardware target: **LG OLED C5**. Start with webOS 25 compatibility and confirm the TV's installed version before implementation. Older televisions are outside the first release target.
 
 ## A look inside
+https://github.com/user-attachments/assets/40341146-2962-4814-b034-fcf506b4299e
 
 Glass channel cards sit over a background that follows the selected channel's colour. Move focus with the remote to go from **Petőfi green** to **M4 Sport red**.
 
